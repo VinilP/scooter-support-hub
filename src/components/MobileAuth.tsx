@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const MobileAuth = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState<'phone' | 'otp' | 'success'>('phone');
   const [selectedCountry, setSelectedCountry] = useState<Country>(
     countries.find(country => country.code === 'IN') || countries[0]
@@ -155,6 +157,11 @@ const MobileAuth = () => {
         title: "Success",
         description: "Phone number verified successfully!",
       });
+      
+      // Redirect to home page after successful authentication
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
       
     } catch (error: any) {
       toast({
