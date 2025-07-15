@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import PaymentModal from "@/components/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
 import { Battery, Zap } from "lucide-react";
 
@@ -120,9 +122,11 @@ const ScooterProducts = () => {
                       ${product.price.toLocaleString()}
                     </span>
                   </div>
-                  <button className="px-6 py-2 bg-gradient-to-r from-primary to-primary-glow text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity duration-200 hover:shadow-lg hover:shadow-primary/25">
-                    View Details
-                  </button>
+                  <PaymentModal scooterName={product.name} price={product.price}>
+                    <Button className="px-6 py-2 bg-gradient-to-r from-primary to-primary-glow text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity duration-200 hover:shadow-lg hover:shadow-primary/25">
+                      Buy Now
+                    </Button>
+                  </PaymentModal>
                 </div>
               </CardContent>
             </Card>
