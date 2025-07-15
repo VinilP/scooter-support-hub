@@ -7,7 +7,6 @@ import { CreditCard, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import AuthModal from "./AuthModal";
 
 interface PaymentModalProps {
   scooterName: string;
@@ -18,7 +17,6 @@ interface PaymentModalProps {
 const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     cardNumber: '',
@@ -35,7 +33,9 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
         description: "Please log in to purchase a scooter.",
         variant: "destructive"
       });
-      setAuthModalOpen(true);
+      // Store current page and redirect to login
+      const currentPath = window.location.pathname + window.location.search;
+      window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
       return;
     }
     setOpen(true);
@@ -236,15 +236,6 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
         </div>
       </DialogContent>
     </Dialog>
-    
-    <AuthModal 
-      isOpen={authModalOpen}
-      onClose={() => setAuthModalOpen(false)}
-      onSuccess={() => {
-        setAuthModalOpen(false);
-        setOpen(true);
-      }}
-    />
     </>
   );
 };
