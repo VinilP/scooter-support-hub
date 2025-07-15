@@ -163,10 +163,10 @@ const MobileAuth = () => {
         description: "Phone number verified successfully!",
       });
       
-      // Redirect to home page after successful authentication
+      // Wait for auth state to update before redirecting
       setTimeout(() => {
-        navigate('/');
-      }, 2000);
+        window.location.href = '/';
+      }, 1000);
       
     } catch (error: any) {
       toast({

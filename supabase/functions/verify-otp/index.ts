@@ -24,22 +24,8 @@ serve(async (req) => {
       throw new Error('Phone number and OTP are required');
     }
 
-    // In a real implementation, you would:
-    // 1. Verify the OTP against stored value (database/Redis)
-    // 2. Check expiration time
-    // 3. Handle rate limiting
-    
-    // For now, we'll create a simple verification
-    // You could store OTPs in Supabase or use Redis
-    
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     // For demo purposes, accept any 6-digit OTP
-    // In development or if no real OTP verification is implemented, accept any 6-digit OTP
-    const isValidOTP = /^\d{6}$/.test(otp); // Accept any 6-digit OTP for demo
+    const isValidOTP = /^\d{6}$/.test(otp);
 
     if (!isValidOTP) {
       return new Response(
@@ -51,31 +37,30 @@ serve(async (req) => {
       );
     }
 
-    // Create or find user by phone number
-    // First check if user exists in profiles table
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check if user exists in profiles table
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('user_id')
       .eq('phone_number', phoneNumber)
-      .single();
+      .maybeSingle();
 
     let userId: string;
 
     if (existingProfile) {
       userId = existingProfile.user_id;
     } else {
-      // Create a new user
-      // Since we can't directly create auth users via API, we'll use a workaround
-      // Generate a temporary email for the user
-      const tempEmail = `${phoneNumber.replace(/[^0-9]/g, '')}@phone.auth`;
-      const tempPassword = Math.random().toString(36).substring(2, 15);
-
+      // Create a new user using phone authentication
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: tempEmail,
-        password: tempPassword,
         phone: phoneNumber,
-        email_confirm: true,
         phone_confirm: true,
+        user_metadata: {
+          phone_number: phoneNumber
+        }
       });
 
       if (authError) {
@@ -100,10 +85,21 @@ serve(async (req) => {
       }
     }
 
-    // Generate a session for the user using admin.createUser session
-    const tempEmail = `${phoneNumber.replace(/[^0-9]/g, '')}@phone.auth`;
+    // Generate access tokens for the user
+    // Use a simple approach - create a temporary password reset link
+    const tempEmail = `${phoneNumber.replace(/[^0-9]/g, '')}@phone.temp`;
     
-    // Use admin.generateLink to create a recovery link which contains session tokens
+    // First, update the user to have this temp email
+    const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
+      email: tempEmail,
+      email_confirm: true
+    });
+
+    if (updateError && !updateError.message.includes('already exists')) {
+      console.error('Error updating user email:', updateError);
+    }
+
+    // Generate a recovery link to get session tokens
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email: tempEmail,
