@@ -85,29 +85,41 @@ serve(async (req) => {
       }
     }
 
-    // Generate access tokens for the user
-    // Use a simple approach - create a temporary password reset link
-    const tempEmail = `${phoneNumber.replace(/[^0-9]/g, '')}@phone.temp`;
+    // Generate session tokens by creating a sign-in session
+    // Use admin.createUser with auto-confirm to get immediate session
+    let sessionData;
     
-    // First, update the user to have this temp email
-    const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
-      email: tempEmail,
-      email_confirm: true
-    });
-
-    if (updateError && !updateError.message.includes('already exists')) {
-      console.error('Error updating user email:', updateError);
-    }
-
-    // Generate a recovery link to get session tokens
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: 'recovery',
-      email: tempEmail,
-    });
-
-    if (linkError) {
-      console.error('Error generating recovery link:', linkError);
-      throw new Error('Failed to generate session tokens');
+    if (existingProfile) {
+      // For existing users, generate a session directly
+      const { data, error } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email: `${phoneNumber.replace(/[^0-9]/g, '')}@phone.temp`,
+        options: {
+          redirectTo: 'http://localhost:3000'
+        }
+      });
+      
+      if (error) {
+        console.error('Error generating session for existing user:', error);
+        throw new Error('Failed to generate session');
+      }
+      sessionData = data;
+    } else {
+      // For new users, the createUser response already contains session data
+      const { data, error } = await supabase.auth.admin.generateLink({
+        type: 'signup',
+        email: `${phoneNumber.replace(/[^0-9]/g, '')}@phone.temp`,
+        password: Math.random().toString(36).substring(2, 15),
+        options: {
+          redirectTo: 'http://localhost:3000'
+        }
+      });
+      
+      if (error) {
+        console.error('Error generating session for new user:', error);
+        throw new Error('Failed to generate session');
+      }
+      sessionData = data;
     }
 
     return new Response(
@@ -115,9 +127,9 @@ serve(async (req) => {
         success: true,
         message: 'OTP verified successfully',
         user: { id: userId, phone: phoneNumber },
-        access_token: linkData.properties?.access_token,
-        refresh_token: linkData.properties?.refresh_token,
-        expires_at: linkData.properties?.expires_at,
+        access_token: sessionData.properties?.access_token,
+        refresh_token: sessionData.properties?.refresh_token,
+        expires_at: sessionData.properties?.expires_at,
         token_type: 'bearer',
       }),
       {
