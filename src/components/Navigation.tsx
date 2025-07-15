@@ -7,12 +7,19 @@ import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
-  const navItems = [
-    { icon: Package, label: "Orders", href: "/orders" },
-    { icon: User, label: "Login", href: "/login" },
-    ...(user ? [{ icon: Settings, label: "Admin FAQs", href: "/admin/faqs" }] : []),
+  const handleLogout = async () => {
+    await signOut();
+  };
+
+  const navItems = user ? [
+    { icon: Package, label: "Orders", href: "/order-tracking" },
+    { icon: Settings, label: "Admin FAQs", href: "/admin/faqs" },
+    { icon: User, label: "Log Out", href: "#", onClick: handleLogout },
+  ] : [
+    { icon: User, label: "Log In", href: "/login" },
+    { icon: User, label: "Sign Up", href: "/login?signup=true" },
   ];
 
   return (
@@ -34,12 +41,20 @@ const Navigation = () => {
                 key={item.label}
                 variant="ghost"
                 className="flex items-center space-x-2"
-                asChild
+                onClick={item.onClick}
+                asChild={!item.onClick}
               >
-                <Link to={item.href}>
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Link>
+                {item.onClick ? (
+                  <>
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </>
+                ) : (
+                  <Link to={item.href}>
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                )}
               </Button>
             ))}
           </div>
@@ -68,12 +83,20 @@ const Navigation = () => {
               key={item.label}
               variant="ghost"
               className="w-full justify-start space-x-2"
-              asChild
+              onClick={item.onClick}
+              asChild={!item.onClick}
             >
-              <Link to={item.href}>
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </Link>
+              {item.onClick ? (
+                <>
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </>
+              ) : (
+                <Link to={item.href}>
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
+              )}
             </Button>
           ))}
         </div>
