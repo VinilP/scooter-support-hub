@@ -239,6 +239,42 @@ export type Database = {
         }
         Relationships: []
       }
+      scooter_products: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          name: string
+          price: number
+          range_km: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          name: string
+          price: number
+          range_km: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          range_km?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
