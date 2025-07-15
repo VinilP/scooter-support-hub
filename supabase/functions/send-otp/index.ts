@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,7 +9,10 @@ const corsHeaders = {
 
 interface SendOTPRequest {
   phoneNumber: string;
+  isAdminRequest?: boolean;
 }
+
+const ADMIN_PHONE_NUMBER = '+919890236593';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -16,10 +20,45 @@ serve(async (req) => {
   }
 
   try {
-    const { phoneNumber }: SendOTPRequest = await req.json();
+    const { phoneNumber, isAdminRequest }: SendOTPRequest = await req.json();
 
     if (!phoneNumber) {
       throw new Error('Phone number is required');
+    }
+
+    // Validate admin access if this is an admin request
+    if (isAdminRequest && phoneNumber !== ADMIN_PHONE_NUMBER) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Admin access denied for this phone number' }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Create Supabase client for additional validation
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check if user exists and validate admin status for admin requests
+    if (isAdminRequest) {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('phone_number')
+        .eq('phone_number', phoneNumber)
+        .maybeSingle();
+
+      if (existingProfile && existingProfile.phone_number !== ADMIN_PHONE_NUMBER) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Admin access denied' }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
     }
 
     // Generate 6-digit OTP

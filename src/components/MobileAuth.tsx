@@ -21,6 +21,11 @@ const MobileAuth = () => {
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { toast } = useToast();
 
+  // Check if this is an admin request (detect admin-related routes)
+  const isAdminRequest = window.location.pathname.includes('/admin') || 
+                        window.location.search.includes('admin=true') ||
+                        phoneNumber === '9890236593';
+
   // Countdown timer for resend OTP
   useEffect(() => {
     if (countdown > 0) {
@@ -52,6 +57,7 @@ const MobileAuth = () => {
         },
         body: JSON.stringify({
           phoneNumber: fullPhoneNumber,
+          isAdminRequest,
         }),
       });
 
@@ -131,6 +137,7 @@ const MobileAuth = () => {
         body: JSON.stringify({
           phoneNumber: fullPhoneNumber,
           otp: otpValue,
+          isAdminRequest,
         }),
       });
 
@@ -201,6 +208,7 @@ const MobileAuth = () => {
         },
         body: JSON.stringify({
           phoneNumber: fullPhoneNumber,
+          isAdminRequest,
         }),
       });
 

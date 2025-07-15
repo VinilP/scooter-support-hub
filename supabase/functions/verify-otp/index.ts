@@ -10,7 +10,10 @@ const corsHeaders = {
 interface VerifyOTPRequest {
   phoneNumber: string;
   otp: string;
+  isAdminRequest?: boolean;
 }
+
+const ADMIN_PHONE_NUMBER = '+919890236593';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -18,10 +21,21 @@ serve(async (req) => {
   }
 
   try {
-    const { phoneNumber, otp }: VerifyOTPRequest = await req.json();
+    const { phoneNumber, otp, isAdminRequest }: VerifyOTPRequest = await req.json();
 
     if (!phoneNumber || !otp) {
       throw new Error('Phone number and OTP are required');
+    }
+
+    // Validate admin access if this is an admin request
+    if (isAdminRequest && phoneNumber !== ADMIN_PHONE_NUMBER) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Admin access denied for this phone number' }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // For demo purposes, accept any 6-digit OTP
@@ -102,6 +116,25 @@ serve(async (req) => {
       }
     }
 
+    // Additional validation for admin requests
+    if (isAdminRequest) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('phone_number')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!profile || profile.phone_number !== ADMIN_PHONE_NUMBER) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Admin access denied' }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    }
+
     // Instead of trying to generate tokens, return user info for client-side sign in
     return new Response(
       JSON.stringify({ 
@@ -110,7 +143,8 @@ serve(async (req) => {
         user: { 
           id: userId, 
           phone: phoneNumber,
-          email: userEmail
+          email: userEmail,
+          isAdmin: phoneNumber === ADMIN_PHONE_NUMBER
         },
         // Signal that client should sign in with this email
         shouldSignIn: true
