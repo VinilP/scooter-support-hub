@@ -23,10 +23,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get user ID from URL path
-    const url = new URL(req.url);
-    const pathParts = url.pathname.split('/');
-    const userId = pathParts[pathParts.length - 1];
+    // Get user ID from request body
+    const { userId } = await req.json();
     
     console.log('Getting orders for user:', userId);
 
