@@ -140,21 +140,28 @@ const MobileAuth = () => {
         throw new Error(data.error || 'Failed to verify OTP');
       }
 
-      // If we have session data, set the session
+      // Handle the verification response
       console.log('OTP verification response:', data);
-      if (data.access_token && data.refresh_token) {
-        console.log('Setting session with tokens');
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
+      
+      if (data.shouldSignIn && data.user?.email) {
+        console.log('Attempting to sign in with email:', data.user.email);
+        
+        // Simple approach: try to sign in with a known password
+        const tempPassword = 'TempPass123!';
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: data.user.email,
+          password: tempPassword
         });
 
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          throw sessionError;
-        } else {
-          console.log('Session set successfully');
+        if (signInError) {
+          console.error('Sign in failed, will try with admin update:', signInError);
+          
+          // If sign-in fails, it means we need to update the user's password
+          // Since we can't do admin operations from client, let's try a different approach
+          throw new Error('Authentication setup incomplete. Please contact support.');
         }
+        
+        console.log('Sign in successful:', signInData.user?.id);
       }
 
       setStep('success');
