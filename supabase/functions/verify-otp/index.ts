@@ -100,12 +100,18 @@ serve(async (req) => {
       }
     }
 
-    // Create a proper session for the user using admin.generateAccessToken
-    const { data: tokenData, error: tokenError } = await supabase.auth.admin.generateAccessToken(userId);
+    // Generate a session for the user using admin.createUser session
+    const tempEmail = `${phoneNumber.replace(/[^0-9]/g, '')}@phone.auth`;
+    
+    // Use admin.generateLink to create a recovery link which contains session tokens
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'recovery',
+      email: tempEmail,
+    });
 
-    if (tokenError) {
-      console.error('Error generating access token:', tokenError);
-      throw new Error('Failed to generate access token');
+    if (linkError) {
+      console.error('Error generating recovery link:', linkError);
+      throw new Error('Failed to generate session tokens');
     }
 
     return new Response(
@@ -113,9 +119,9 @@ serve(async (req) => {
         success: true,
         message: 'OTP verified successfully',
         user: { id: userId, phone: phoneNumber },
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
-        expires_at: tokenData.expires_at,
+        access_token: linkData.properties?.access_token,
+        refresh_token: linkData.properties?.refresh_token,
+        expires_at: linkData.properties?.expires_at,
         token_type: 'bearer',
       }),
       {
