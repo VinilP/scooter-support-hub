@@ -67,7 +67,7 @@ const MobileAuth = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // For demo purposes, create a mock user session with phone number
-      const mockEmail = `${selectedCountry.dial}${phoneNumber}@mobile.demo`;
+      const mockEmail = `${selectedCountry.dial.replace('+', '')}${phoneNumber}@mobile.demo`;
       const mockPassword = 'demo123456';
       
       try {
