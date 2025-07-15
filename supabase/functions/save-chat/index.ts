@@ -111,31 +111,45 @@ serve(async (req) => {
       systemPrompt += `\n\nThe user has uploaded a file with the following content/context: ${fileContext}`;
     }
 
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...conversationContext.slice(-6), // Last 6 messages for context
-          { role: 'user', content: message }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
-    });
+    // Call OpenAI API with fallback for quota issues
+    let aiResponse;
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...conversationContext.slice(-6), // Last 6 messages for context
+            { role: 'user', content: message }
+          ],
+          temperature: 0.7,
+          max_tokens: 1000,
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${await response.text()}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('OpenAI API error:', errorText);
+        
+        // Check if it's a quota issue and provide fallback response
+        if (errorText.includes('insufficient_quota')) {
+          aiResponse = "I apologize, but our AI service is temporarily unavailable due to high demand. However, I can still help you! Please try asking your question again, or if you need immediate assistance with your order, you can contact our support team directly at our support page.";
+        } else {
+          throw new Error(`OpenAI API error: ${errorText}`);
+        }
+      } else {
+        const data = await response.json();
+        aiResponse = data.choices[0].message.content;
+      }
+    } catch (error) {
+      console.error('OpenAI API call failed:', error);
+      aiResponse = "I apologize, but our AI service is temporarily unavailable. Please try again in a few moments, or contact our support team directly for immediate assistance.";
     }
-
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
 
     // Save AI response
     await supabase
