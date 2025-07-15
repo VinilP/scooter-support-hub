@@ -8,12 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Save, X, ArrowLeft, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Save, X, ArrowLeft, Search, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import TagInput from "@/components/TagInput";
+import NotAuthorized from "@/components/NotAuthorized";
 
 interface FAQ {
   id: string;
@@ -29,7 +31,9 @@ interface FAQ {
 
 const AdminFAQs = () => {
   const { user } = useAuth();
+  const { isAdmin, loading: adminLoading, hasProfile, createProfileWithPhone, adminPhoneNumber } = useAdminAuth();
   const { toast } = useToast();
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [filteredFaqs, setFilteredFaqs] = useState<FAQ[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -199,16 +203,96 @@ const AdminFAQs = () => {
     setIsDialogOpen(false);
   };
 
+  const handleCreateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phoneNumber.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter your phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const success = await createProfileWithPhone(phoneNumber);
+    if (success) {
+      toast({
+        title: "Profile Created",
+        description: "Your profile has been created successfully",
+      });
+      setPhoneNumber("");
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to create profile",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-96">
           <CardContent className="pt-6">
-            <p className="text-center text-gray-600">Please log in to access the admin panel.</p>
+            <p className="text-center text-muted-foreground">Please log in to access the admin panel.</p>
           </CardContent>
         </Card>
       </div>
     );
+  }
+
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!hasProfile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-96">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Phone className="h-5 w-5" />
+              Complete Your Profile
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Please enter your phone number to complete your profile and access admin features.
+            </p>
+            <form onSubmit={handleCreateProfile} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Complete Profile
+              </Button>
+            </form>
+            <div className="flex justify-center">
+              <Button variant="outline" asChild>
+                <Link to="/">Go Back Home</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return <NotAuthorized />;
   }
 
   return (
