@@ -254,7 +254,7 @@ const FloatingChatWidget = () => {
     setIsTyping(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('chat-completion', {
+      const { data, error } = await supabase.functions.invoke('save-chat', {
         body: {
           message: inputValue,
           conversationId: currentConversationId,
