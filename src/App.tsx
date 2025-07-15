@@ -8,6 +8,8 @@ import FloatingChatWidget from "@/components/FloatingChatWidget";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminFAQs from "./pages/AdminFAQs";
+import AdminOrders from "./pages/AdminOrders";
+import AdminEscalatedQueries from "./pages/AdminEscalatedQueries";
 import OrderTracking from "./pages/OrderTracking";
 import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
@@ -25,6 +27,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin/faqs" element={<AdminFAQs />} />
+            <Route path="/admin/orders" element={<AdminOrders />} />
+            <Route path="/admin/escalated-queries" element={<AdminEscalatedQueries />} />
             <Route path="/support" element={<Support />} />
             <Route path="/order-tracking" element={<OrderTracking />} />
             <Route path="/order-tracking/:orderId" element={<OrderTracking />} />

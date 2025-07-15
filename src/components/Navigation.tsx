@@ -1,13 +1,15 @@
-import { Menu, X, Zap, User, Package, Settings, MessageSquare, Phone, Mail } from "lucide-react";
+import { Menu, X, Zap, User, Package, Settings, MessageSquare, Phone, Mail, AlertTriangle, FileText } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdminAuth();
 
   const handleLogout = async () => {
     await signOut();
@@ -27,7 +29,11 @@ const Navigation = () => {
 
   const navItems = user ? [
     { icon: Package, label: "Orders", href: "/order-tracking" },
-    { icon: Settings, label: "Admin FAQs", href: "/admin/faqs" },
+    ...(isAdmin ? [
+      { icon: Settings, label: "Admin FAQs", href: "/admin/faqs" },
+      { icon: FileText, label: "All Orders", href: "/admin/orders" },
+      { icon: AlertTriangle, label: "Issues", href: "/admin/escalated-queries" },
+    ] : []),
     { icon: MessageSquare, label: "Support", href: "/support" },
     { icon: MessageSquare, label: "Chat", href: "#", onClick: handleChatClick },
     { icon: Phone, label: "Call", href: "tel:1231231231" },
