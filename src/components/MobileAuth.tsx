@@ -3,9 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Smartphone, Shield, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
+import CountryCodeSelector, { countries, type Country } from "./CountryCodeSelector";
 
 const MobileAuth = () => {
   const [step, setStep] = useState<'phone' | 'otp' | 'success'>('phone');
+  const [selectedCountry, setSelectedCountry] = useState<Country>(
+    countries.find(country => country.code === 'IN') || countries[0]
+  );
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +27,10 @@ const MobileAuth = () => {
   const handleSendOTP = async () => {
     if (phoneNumber) {
       setIsLoading(true);
+      // Combine country code with phone number
+      const fullPhoneNumber = `${selectedCountry.dial}${phoneNumber}`;
+      console.log('Sending OTP to:', fullPhoneNumber);
+      
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       setIsLoading(false);
@@ -95,7 +103,7 @@ const MobileAuth = () => {
           </CardTitle>
           <CardDescription>
             {step === 'phone' && 'Enter your mobile number to receive a verification code'}
-            {step === 'otp' && `We sent a 6-digit code to ${phoneNumber}`}
+            {step === 'otp' && `We sent a 6-digit code to ${selectedCountry.dial}${phoneNumber}`}
             {step === 'success' && 'Login successful! Redirecting to dashboard...'}
           </CardDescription>
         </CardHeader>
@@ -106,12 +114,14 @@ const MobileAuth = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Mobile Number</label>
                 <div className="flex">
-                  <span className="inline-flex items-center px-3 border border-r-0 border-input bg-muted rounded-l-md text-sm">
-                    +1
-                  </span>
+                  <CountryCodeSelector
+                    value={selectedCountry}
+                    onChange={setSelectedCountry}
+                    disabled={isLoading}
+                  />
                   <Input
                     type="tel"
-                    placeholder="(555) 123-4567"
+                    placeholder="Enter your mobile number"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     className="rounded-l-none"
