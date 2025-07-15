@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -21,25 +21,125 @@ interface Message {
   };
 }
 
+const STORAGE_KEYS = {
+  MESSAGES: 'scootsupport_chat_messages',
+  CONVERSATION_ID: 'scootsupport_conversation_id',
+  CHAT_STATE: 'scootsupport_chat_state'
+};
+
+const getInitialMessages = (): Message[] => [
+  {
+    id: '1',
+    content: "Hi! I'm here to help you with any questions about your electric scooter. How can I assist you today?",
+    sender: 'bot',
+    timestamp: new Date(),
+  }
+];
+
 const FloatingChatWidget = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: "Hi! I'm here to help you with any questions about your electric scooter. How can I assist you today?",
-      sender: 'bot',
-      timestamp: new Date(),
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>(getInitialMessages());
   const [inputValue, setInputValue] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load chat history from localStorage on mount
+  useEffect(() => {
+    const loadChatHistory = () => {
+      try {
+        const storedMessages = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+        const storedConversationId = localStorage.getItem(STORAGE_KEYS.CONVERSATION_ID);
+        const storedChatState = localStorage.getItem(STORAGE_KEYS.CHAT_STATE);
+
+        if (storedMessages) {
+          const parsedMessages = JSON.parse(storedMessages);
+          // Convert timestamp strings back to Date objects
+          const messagesWithDates = parsedMessages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+          setMessages(messagesWithDates);
+        }
+
+        if (storedConversationId) {
+          setCurrentConversationId(storedConversationId);
+        }
+
+        if (storedChatState) {
+          const { isExpanded } = JSON.parse(storedChatState);
+          setIsExpanded(isExpanded);
+        }
+      } catch (error) {
+        console.error('Error loading chat history from localStorage:', error);
+        // Fallback to initial state if localStorage is corrupted
+        setMessages(getInitialMessages());
+        setCurrentConversationId(null);
+      }
+    };
+
+    loadChatHistory();
+  }, []);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(messages));
+    } catch (error) {
+      console.error('Error saving messages to localStorage:', error);
+    }
+  }, [messages]);
+
+  // Save conversation ID to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      if (currentConversationId) {
+        localStorage.setItem(STORAGE_KEYS.CONVERSATION_ID, currentConversationId);
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.CONVERSATION_ID);
+      }
+    } catch (error) {
+      console.error('Error saving conversation ID to localStorage:', error);
+    }
+  }, [currentConversationId]);
+
+  // Save chat state (expanded/collapsed) to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.CHAT_STATE, JSON.stringify({ isExpanded }));
+    } catch (error) {
+      console.error('Error saving chat state to localStorage:', error);
+    }
+  }, [isExpanded]);
+
+  // Clear localStorage when user signs out
+  useEffect(() => {
+    if (!user) {
+      // Only clear if user explicitly signed out (not on initial load)
+      const hasStoredState = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+      if (hasStoredState && currentConversationId) {
+        // User signed out, clear chat history
+        clearChatHistory();
+      }
+    }
+  }, [user, currentConversationId]);
+
+  const clearChatHistory = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.MESSAGES);
+      localStorage.removeItem(STORAGE_KEYS.CONVERSATION_ID);
+      localStorage.removeItem(STORAGE_KEYS.CHAT_STATE);
+      setMessages(getInitialMessages());
+      setCurrentConversationId(null);
+    } catch (error) {
+      console.error('Error clearing chat history:', error);
+    }
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -219,14 +319,9 @@ const FloatingChatWidget = () => {
   };
 
   const handleSignOut = async () => {
+    // Clear chat history before signing out
+    clearChatHistory();
     await signOut();
-    setMessages([{
-      id: '1',
-      content: "Hi! I'm here to help you with any questions about your electric scooter. How can I assist you today?",
-      sender: 'bot',
-      timestamp: new Date(),
-    }]);
-    setCurrentConversationId(null);
     toast({
       title: "Signed Out",
       description: "You've been signed out successfully.",
