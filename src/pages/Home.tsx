@@ -1,5 +1,6 @@
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
+import ProductCarousel from "@/components/ProductCarousel";
 import ScooterProducts from "@/components/ScooterProducts";
 import OrderStatus from "@/components/OrderStatus";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +12,7 @@ const Home = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <Hero />
+      <ProductCarousel />
       <ScooterProducts />
       {user && (
         <section className="py-16 px-4">
