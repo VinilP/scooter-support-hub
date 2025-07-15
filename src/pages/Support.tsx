@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
+import Hero from "@/components/Hero";
 import QuickSupport from "@/components/QuickSupport";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +27,7 @@ const Support = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+      <Hero />
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-muted/20 to-background">
         {/* Background Elements */}
