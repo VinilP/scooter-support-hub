@@ -16,7 +16,7 @@ const featuredProducts: CarouselProduct[] = [
   {
     id: "1",
     name: "Vespa Elettrica",
-    image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&h=600&fit=crop",
+    image: "https://images.unsplash.com/photo-1567627342315-ce882c9286f3?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     price: 6390,
     features: ["100km Range", "Premium Design", "Smart Features"],
     description: "Classic Italian design meets modern electric technology"
@@ -24,7 +24,7 @@ const featuredProducts: CarouselProduct[] = [
   {
     id: "2", 
     name: "Lightning Sport",
-    image: "https://images.unsplash.com/photo-1544191696-15693072e1d4?w=800&h=600&fit=crop",
+    image: "https://images.unsplash.com/photo-1623241207542-0a29432c0d1c?q=80&w=985&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     price: 7890,
     features: ["120km Range", "Sport Mode", "Fast Charging"],
     description: "High-performance electric moped with sport styling"
@@ -32,7 +32,7 @@ const featuredProducts: CarouselProduct[] = [
   {
     id: "3",
     name: "Urban Classic 125",
-    image: "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=800&h=600&fit=crop", 
+    image: "https://images.unsplash.com/photo-1723235102273-17d6851f918b?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", 
     price: 4999,
     features: ["85km Range", "Retro Style", "City Ready"],
     description: "Retro-styled electric moped perfect for city commuting"
@@ -95,7 +95,7 @@ const ProductCarousel = () => {
                         alt={product.name}
                         className="relative w-full h-80 object-cover rounded-xl shadow-2xl transform hover:scale-105 transition-transform duration-500"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&h=600&fit=crop';
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1567627342315-ce882c9286f3?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
                         }}
                       />
                     </div>
@@ -200,7 +200,7 @@ const ProductCarousel = () => {
                   alt={product.name}
                   className="w-full h-24 object-cover rounded-lg mb-2"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&h=600&fit=crop';
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1567627342315-ce882c9286f3?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
                   }}
                 />
                 <h4 className="font-semibold text-sm text-foreground">{product.name}</h4>
