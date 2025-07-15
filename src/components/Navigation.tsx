@@ -7,9 +7,9 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
-    { icon: MessageCircle, label: "Support", href: "/support" },
+    { icon: MessageCircle, label: "Support", href: "/chat" },
     { icon: Package, label: "Orders", href: "/orders" },
-    { icon: User, label: "Profile", href: "/profile" },
+    { icon: User, label: "Login", href: "/login" },
     { icon: Settings, label: "Admin", href: "/admin" },
   ];
 
@@ -32,6 +32,7 @@ const Navigation = () => {
                 key={item.label}
                 variant="ghost"
                 className="flex items-center space-x-2"
+                onClick={() => window.location.href = item.href}
               >
                 <item.icon className="h-4 w-4" />
                 <span>{item.label}</span>
@@ -63,6 +64,7 @@ const Navigation = () => {
               key={item.label}
               variant="ghost"
               className="w-full justify-start space-x-2"
+              onClick={() => window.location.href = item.href}
             >
               <item.icon className="h-4 w-4" />
               <span>{item.label}</span>

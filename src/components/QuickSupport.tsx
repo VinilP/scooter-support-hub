@@ -70,7 +70,11 @@ const QuickSupport = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="electric" className="w-full">
+            <Button 
+              onClick={() => window.location.href = '/chat'}
+              variant="electric" 
+              className="w-full"
+            >
               Start Chat Support
             </Button>
           </CardContent>
