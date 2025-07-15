@@ -2,14 +2,17 @@ import { Menu, X, Zap, User, Package, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
 
   const navItems = [
     { icon: Package, label: "Orders", href: "/orders" },
     { icon: User, label: "Login", href: "/login" },
-    { icon: Settings, label: "Admin", href: "/admin" },
+    ...(user ? [{ icon: Settings, label: "Admin FAQs", href: "/admin/faqs" }] : []),
   ];
 
   return (
@@ -31,10 +34,12 @@ const Navigation = () => {
                 key={item.label}
                 variant="ghost"
                 className="flex items-center space-x-2"
-                onClick={() => window.location.href = item.href}
+                asChild
               >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <Link to={item.href}>
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
               </Button>
             ))}
           </div>
@@ -63,10 +68,12 @@ const Navigation = () => {
               key={item.label}
               variant="ghost"
               className="w-full justify-start space-x-2"
-              onClick={() => window.location.href = item.href}
+              asChild
             >
-              <item.icon className="h-4 w-4" />
-              <span>{item.label}</span>
+              <Link to={item.href}>
+                <item.icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Link>
             </Button>
           ))}
         </div>
