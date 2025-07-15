@@ -1,5 +1,4 @@
 import Navigation from "@/components/Navigation";
-import Hero from "@/components/Hero";
 import ProductCarousel from "@/components/ProductCarousel";
 import ScooterProducts from "@/components/ScooterProducts";
 import OrderStatus from "@/components/OrderStatus";
