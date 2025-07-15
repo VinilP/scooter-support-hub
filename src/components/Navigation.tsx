@@ -1,4 +1,4 @@
-import { Menu, X, Zap, User, Package, Settings } from "lucide-react";
+import { Menu, X, Zap, User, Package, Settings, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,8 +16,10 @@ const Navigation = () => {
   const navItems = user ? [
     { icon: Package, label: "Orders", href: "/order-tracking" },
     { icon: Settings, label: "Admin FAQs", href: "/admin/faqs" },
+    { icon: MessageSquare, label: "Support", href: "/support" },
     { icon: User, label: "Log Out", href: "#", onClick: handleLogout },
   ] : [
+    { icon: MessageSquare, label: "Support", href: "/support" },
     { icon: User, label: "Log In", href: "/login" },
     { icon: User, label: "Sign Up", href: "/login?signup=true" },
   ];

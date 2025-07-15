@@ -1,6 +1,7 @@
 import { MessageSquare, Upload, Zap, Battery, MapPin, Wrench } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const QuickSupport = () => {
   const supportCategories = [
@@ -41,19 +42,21 @@ const QuickSupport = () => {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {supportCategories.map((category, index) => (
-          <Card key={index} className="hover:shadow-electric transition-all duration-300 cursor-pointer group">
-            <CardHeader className="text-center">
-              <div className={`mx-auto mb-4 p-3 rounded-full bg-secondary group-hover:scale-110 transition-transform duration-300`}>
-                <category.icon className={`h-8 w-8 ${category.color}`} />
-              </div>
-              <CardTitle className="text-lg">{category.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-center">
-                {category.description}
-              </CardDescription>
-            </CardContent>
-          </Card>
+          <Link key={index} to="/support">
+            <Card className="hover:shadow-electric transition-all duration-300 cursor-pointer group h-full">
+              <CardHeader className="text-center">
+                <div className={`mx-auto mb-4 p-3 rounded-full bg-secondary group-hover:scale-110 transition-transform duration-300`}>
+                  <category.icon className={`h-8 w-8 ${category.color}`} />
+                </div>
+                <CardTitle className="text-lg">{category.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-center">
+                  {category.description}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 

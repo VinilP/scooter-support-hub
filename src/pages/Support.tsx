@@ -4,6 +4,7 @@ import QuickSupport from "@/components/QuickSupport";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, Phone, Mail, Clock, Star, Users, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-scooter.jpg";
 
 const Support = () => {
@@ -17,10 +18,10 @@ const Support = () => {
   ];
 
   const quickActions = [
-    { title: "Track Order", description: "Check your order status", icon: Star },
-    { title: "User Manual", description: "Download user guides", icon: MessageSquare },
-    { title: "Warranty Info", description: "Learn about warranty", icon: Users },
-    { title: "Schedule Service", description: "Book maintenance", icon: Clock },
+    { title: "Track Order", description: "Check your order status", icon: Star, href: "/order-tracking" },
+    { title: "User Manual", description: "Download user guides", icon: MessageSquare, href: "#" },
+    { title: "Warranty Info", description: "Learn about warranty", icon: Users, href: "#" },
+    { title: "Schedule Service", description: "Book maintenance", icon: Clock, href: "#" },
   ];
 
   return (
@@ -121,8 +122,9 @@ const Support = () => {
                   {quickActions.map((action, index) => {
                     const Icon = action.icon;
                     return (
-                      <div 
+                      <Link 
                         key={index}
+                        to={action.href}
                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
                       >
                         <Icon className="w-5 h-5 text-primary" />
@@ -130,7 +132,7 @@ const Support = () => {
                           <p className="font-medium text-sm">{action.title}</p>
                           <p className="text-xs text-muted-foreground">{action.description}</p>
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </CardContent>
