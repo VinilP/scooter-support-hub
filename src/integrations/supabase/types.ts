@@ -14,7 +14,109 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_analytics: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          file_processed: boolean | null
+          id: string
+          query_text: string | null
+          response_time_ms: number | null
+          user_id: string | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          file_processed?: boolean | null
+          id?: string
+          query_text?: string | null
+          response_time_ms?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          file_processed?: boolean | null
+          id?: string
+          query_text?: string | null
+          response_time_ms?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_analytics_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          sender: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          sender: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          sender?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
