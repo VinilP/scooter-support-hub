@@ -26,21 +26,6 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
   });
   const { toast } = useToast();
 
-  const handleOpenPayment = () => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to purchase a scooter.",
-        variant: "destructive"
-      });
-      // Store current page and redirect to login
-      const currentPath = window.location.pathname + window.location.search;
-      window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
-      return;
-    }
-    setOpen(true);
-  };
-
   const generateOrderId = () => {
     return 'ORD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
   };
@@ -138,12 +123,10 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
                      formData.cardholderName.length >= 2;
 
   return (
-    <>
-      <div onClick={handleOpenPayment}>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         {children}
-      </div>
-      
-      <Dialog open={open} onOpenChange={setOpen}>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -236,7 +219,6 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
         </div>
       </DialogContent>
     </Dialog>
-    </>
   );
 };
 

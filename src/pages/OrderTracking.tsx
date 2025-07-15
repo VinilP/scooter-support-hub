@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Package, Truck, CheckCircle, Clock, ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 
 interface Order {
   id: string;
@@ -23,25 +22,11 @@ const OrderTracking = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchOrder = async () => {
-      if (!orderId) {
+      if (!user || !orderId) {
         setLoading(false);
-        return;
-      }
-      
-      if (!user) {
-        setLoading(false);
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to view your order details.",
-          variant: "destructive"
-        });
-        // Store current page and redirect to login
-        const currentPath = window.location.pathname + window.location.search;
-        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
         return;
       }
 
@@ -132,17 +117,9 @@ const OrderTracking = () => {
           <CardContent className="p-6 text-center">
             <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
             <p className="text-muted-foreground mb-4">Please log in to view your order details.</p>
-            <div className="space-y-2">
-              <Button onClick={() => {
-                const currentPath = window.location.pathname + window.location.search;
-                window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
-              }} className="w-full">
-                Log In
-              </Button>
-              <Button variant="outline" onClick={() => window.location.href = '/'} className="w-full">
-                Go to Home
-              </Button>
-            </div>
+            <Button onClick={() => window.location.href = '/'}>
+              Go to Home
+            </Button>
           </CardContent>
         </Card>
       </div>

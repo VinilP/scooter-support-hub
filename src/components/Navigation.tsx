@@ -1,32 +1,18 @@
-import { Menu, X, Zap, User, Package, Settings, LogOut, Home, Phone } from "lucide-react";
+import { Menu, X, Zap, User, Package, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import AuthModal from "./AuthModal";
-import { useToast } from "@/hooks/use-toast";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const { user, signOut } = useAuth();
-  const { toast } = useToast();
-
-  const handleSignOut = async () => {
-    await signOut();
-    toast({
-      title: "Signed Out",
-      description: "You have been signed out successfully."
-    });
-  };
+  const { user } = useAuth();
 
   const navItems = [
-    { icon: Home, label: "Home", href: "/" },
-    { icon: Phone, label: "Support", href: "/support" },
-    ...(user ? [
-      { icon: Settings, label: "Admin FAQs", href: "/admin/faqs" }
-    ] : []),
+    { icon: Package, label: "Orders", href: "/orders" },
+    { icon: User, label: "Login", href: "/login" },
+    ...(user ? [{ icon: Settings, label: "Admin FAQs", href: "/admin/faqs" }] : []),
   ];
 
   return (
@@ -56,26 +42,6 @@ const Navigation = () => {
                 </Link>
               </Button>
             ))}
-            
-            {user ? (
-              <Button
-                variant="ghost"
-                className="flex items-center space-x-2"
-                onClick={handleSignOut}
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                className="flex items-center space-x-2"
-                onClick={() => setAuthModalOpen(true)}
-              >
-                <User className="h-4 w-4" />
-                <span>Login</span>
-              </Button>
-            )}
           </div>
 
           {/* Mobile menu button */}
@@ -110,34 +76,8 @@ const Navigation = () => {
               </Link>
             </Button>
           ))}
-          
-          {user ? (
-            <Button
-              variant="ghost"
-              className="w-full justify-start space-x-2"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              className="w-full justify-start space-x-2"
-              onClick={() => setAuthModalOpen(true)}
-            >
-              <User className="h-4 w-4" />
-              <span>Login</span>
-            </Button>
-          )}
         </div>
       </div>
-      
-      <AuthModal 
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        onSuccess={() => setAuthModalOpen(false)}
-      />
     </nav>
   );
 };
