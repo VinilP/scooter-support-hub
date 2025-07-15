@@ -2,8 +2,12 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Send, Paperclip, User, Bot, FileText, Image, X, MessageCircle, Minimize2 } from "lucide-react";
+import { Send, Paperclip, User, Bot, FileText, Image, X, MessageCircle, Minimize2, LogIn, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import AuthModal from "./AuthModal";
 
 interface Message {
   id: string;
@@ -18,7 +22,11 @@ interface Message {
 }
 
 const FloatingChatWidget = () => {
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -30,16 +38,30 @@ const FloatingChatWidget = () => {
   const [inputValue, setInputValue] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+      const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
       if (validTypes.includes(file.type)) {
+        // Check file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+          toast({
+            title: "File too large",
+            description: "Please select a file smaller than 10MB.",
+            variant: "destructive",
+          });
+          return;
+        }
         setSelectedFile(file);
       } else {
-        alert('Please select a PDF or image file (JPEG, PNG)');
+        toast({
+          title: "Invalid file type",
+          description: "Please select a PDF or image file.",
+          variant: "destructive",
+        });
       }
     }
   };
@@ -56,8 +78,63 @@ const FloatingChatWidget = () => {
     return file.type === 'application/pdf' ? 'pdf' : 'image';
   };
 
+  const uploadFile = async (file: File) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to upload files.",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const { data, error } = await supabase.functions.invoke('upload-file', {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      return data;
+    } catch (error: any) {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload file",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const sendMessage = async () => {
     if (!inputValue.trim() && !selectedFile) return;
+
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    let fileContext = '';
+    let fileUrl = '';
+    let fileName = '';
+    let fileType = '';
+
+    // Upload file if present
+    if (selectedFile) {
+      const uploadResult = await uploadFile(selectedFile);
+      if (!uploadResult) return; // Upload failed
+      
+      fileContext = uploadResult.fileContext;
+      fileUrl = uploadResult.fileUrl;
+      fileName = uploadResult.fileName;
+      fileType = uploadResult.fileType;
+    }
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -76,19 +153,48 @@ const FloatingChatWidget = () => {
     setSelectedFile(null);
     setIsTyping(true);
 
-    // Simulate bot response
-    setTimeout(() => {
-      setIsTyping(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-completion', {
+        body: {
+          message: inputValue,
+          conversationId: currentConversationId,
+          fileContext: fileContext || undefined,
+        },
+      });
+
+      if (error) throw error;
+
       const botResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: selectedFile 
-          ? "I've received your file. Let me analyze it and get back to you with relevant information."
-          : "Thanks for your question! I'm processing your request and will provide you with detailed assistance shortly.",
+        content: data.response,
         sender: 'bot',
         timestamp: new Date(),
       };
+
       setMessages(prev => [...prev, botResponse]);
-    }, 2000);
+      
+      // Update conversation ID if this was the first message
+      if (!currentConversationId && data.conversationId) {
+        setCurrentConversationId(data.conversationId);
+      }
+
+    } catch (error: any) {
+      toast({
+        title: "Message Failed",
+        description: error.message || "Failed to send message",
+        variant: "destructive",
+      });
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I'm sorry, I'm having trouble responding right now. Please try again.",
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -103,6 +209,28 @@ const FloatingChatWidget = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleAuthSuccess = () => {
+    toast({
+      title: "Welcome!",
+      description: "You can now use the chat feature.",
+    });
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setMessages([{
+      id: '1',
+      content: "Hi! I'm here to help you with any questions about your electric scooter. How can I assist you today?",
+      sender: 'bot',
+      timestamp: new Date(),
+    }]);
+    setCurrentConversationId(null);
+    toast({
+      title: "Signed Out",
+      description: "You've been signed out successfully.",
+    });
   };
 
   return (
@@ -138,17 +266,40 @@ const FloatingChatWidget = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-sm">Support Assistant</h3>
-                  <p className="text-xs text-muted-foreground">Always here to help</p>
+                  <p className="text-xs text-muted-foreground">
+                    {user ? `Signed in as ${user.email?.substring(0, 20)}...` : 'Sign in for full features'}
+                  </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsExpanded(false)}
-                className="h-8 w-8 p-0 hover:bg-muted/50"
-              >
-                <Minimize2 className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                {user ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="h-8 w-8 p-0 hover:bg-muted/50"
+                  >
+                    <LogOut className="h-3 w-3" />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAuthModalOpen(true)}
+                    className="h-8 w-8 p-0 hover:bg-muted/50"
+                  >
+                    <LogIn className="h-3 w-3" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsExpanded(false)}
+                  className="h-8 w-8 p-0 hover:bg-muted/50"
+                >
+                  <Minimize2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -263,7 +414,7 @@ const FloatingChatWidget = () => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -273,6 +424,7 @@ const FloatingChatWidget = () => {
                 size="icon"
                 onClick={() => fileInputRef.current?.click()}
                 className="shrink-0 h-8 w-8 glass-morphism"
+                disabled={uploading}
               >
                 <Paperclip className="h-3 w-3" />
               </Button>
@@ -281,13 +433,14 @@ const FloatingChatWidget = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
+                placeholder={user ? "Type your message..." : "Sign in to chat..."}
                 className="flex-1 text-sm glass-morphism border-0"
+                disabled={!user}
               />
 
               <Button
                 onClick={sendMessage}
-                disabled={!inputValue.trim() && !selectedFile}
+                disabled={(!inputValue.trim() && !selectedFile) || uploading || isTyping || !user}
                 size="icon"
                 className="shrink-0 h-8 w-8 bg-gradient-primary hover:scale-105 transition-transform"
               >
@@ -296,11 +449,17 @@ const FloatingChatWidget = () => {
             </div>
 
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Upload PDF or images for better assistance
+              {user ? "Upload PDF or images for better assistance" : "Sign in to use chat features"}
             </p>
           </div>
         </Card>
       )}
+      
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 };
