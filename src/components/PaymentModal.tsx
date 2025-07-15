@@ -7,6 +7,7 @@ import { CreditCard, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import AuthModal from "./AuthModal";
 
 interface PaymentModalProps {
   scooterName: string;
@@ -17,6 +18,7 @@ interface PaymentModalProps {
 const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     cardNumber: '',
@@ -25,6 +27,19 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
     cardholderName: ''
   });
   const { toast } = useToast();
+
+  const handleOpenPayment = () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to purchase a scooter.",
+        variant: "destructive"
+      });
+      setAuthModalOpen(true);
+      return;
+    }
+    setOpen(true);
+  };
 
   const generateOrderId = () => {
     return 'ORD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
@@ -123,10 +138,12 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
                      formData.cardholderName.length >= 2;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <>
+      <div onClick={handleOpenPayment}>
         {children}
-      </DialogTrigger>
+      </div>
+      
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -219,6 +236,16 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
         </div>
       </DialogContent>
     </Dialog>
+    
+    <AuthModal 
+      isOpen={authModalOpen}
+      onClose={() => setAuthModalOpen(false)}
+      onSuccess={() => {
+        setAuthModalOpen(false);
+        setOpen(true);
+      }}
+    />
+    </>
   );
 };
 

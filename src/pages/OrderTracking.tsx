@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Package, Truck, CheckCircle, Clock, ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import AuthModal from "@/components/AuthModal";
 
 interface Order {
   id: string;
@@ -21,12 +23,25 @@ const OrderTracking = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchOrder = async () => {
-      if (!user || !orderId) {
+      if (!orderId) {
         setLoading(false);
+        return;
+      }
+      
+      if (!user) {
+        setLoading(false);
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to view your order details.",
+          variant: "destructive"
+        });
+        setAuthModalOpen(true);
         return;
       }
 
@@ -117,9 +132,14 @@ const OrderTracking = () => {
           <CardContent className="p-6 text-center">
             <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
             <p className="text-muted-foreground mb-4">Please log in to view your order details.</p>
-            <Button onClick={() => window.location.href = '/'}>
-              Go to Home
-            </Button>
+            <div className="space-y-2">
+              <Button onClick={() => setAuthModalOpen(true)} className="w-full">
+                Log In
+              </Button>
+              <Button variant="outline" onClick={() => window.location.href = '/'} className="w-full">
+                Go to Home
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -261,6 +281,15 @@ const OrderTracking = () => {
           </CardContent>
         </Card>
       </div>
+      
+      <AuthModal 
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={() => {
+          setAuthModalOpen(false);
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };

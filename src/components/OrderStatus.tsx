@@ -25,6 +25,8 @@ const OrderStatus = () => {
   useEffect(() => {
     if (user) {
       fetchOrders();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -90,6 +92,11 @@ const OrderStatus = () => {
         onBack={() => setSelectedOrder(null)} 
       />
     );
+  }
+
+  // Don't render anything if user is not logged in
+  if (!user) {
+    return null;
   }
 
   return (
