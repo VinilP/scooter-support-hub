@@ -7,6 +7,7 @@ import { CreditCard, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import AuthModal from "./AuthModal";
 
 interface PaymentModalProps {
   scooterName: string;
@@ -17,6 +18,7 @@ interface PaymentModalProps {
 const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     cardNumber: '',
@@ -25,6 +27,19 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
     cardholderName: ''
   });
   const { toast } = useToast();
+
+  const handleBuyNow = () => {
+    if (!user) {
+      setShowAuthModal(true);
+    } else {
+      setOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    setOpen(true);
+  };
 
   const generateOrderId = () => {
     return 'ORD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
@@ -123,102 +138,111 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
                      formData.cardholderName.length >= 2;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <>
+      <div onClick={handleBuyNow}>
         {children}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-primary" />
-            Complete Your Purchase
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-6">
-          {/* Order Summary */}
-          <div className="p-4 bg-muted/50 rounded-lg">
-            <h3 className="font-semibold text-foreground">{scooterName}</h3>
-            <p className="text-2xl font-bold text-primary">${price.toLocaleString()}</p>
-          </div>
+      </div>
 
-          {/* Payment Form */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="cardNumber">Card Number</Label>
-              <div className="relative">
-                <Input
-                  id="cardNumber"
-                  placeholder="1234 5678 9012 3456"
-                  value={formData.cardNumber}
-                  onChange={(e) => handleInputChange('cardNumber', formatCardNumber(e.target.value))}
-                  maxLength={19}
-                  className="pl-10"
-                />
-                <CreditCard className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
-              </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-primary" />
+              Complete Your Purchase
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Order Summary */}
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <h3 className="font-semibold text-foreground">{scooterName}</h3>
+              <p className="text-2xl font-bold text-primary">${price.toLocaleString()}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Payment Form */}
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="expiryDate">Expiry Date</Label>
-                <Input
-                  id="expiryDate"
-                  placeholder="MM/YY"
-                  value={formData.expiryDate}
-                  onChange={(e) => handleInputChange('expiryDate', formatExpiryDate(e.target.value))}
-                  maxLength={5}
-                />
+                <Label htmlFor="cardNumber">Card Number</Label>
+                <div className="relative">
+                  <Input
+                    id="cardNumber"
+                    placeholder="1234 5678 9012 3456"
+                    value={formData.cardNumber}
+                    onChange={(e) => handleInputChange('cardNumber', formatCardNumber(e.target.value))}
+                    maxLength={19}
+                    className="pl-10"
+                  />
+                  <CreditCard className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
+                </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="expiryDate">Expiry Date</Label>
+                  <Input
+                    id="expiryDate"
+                    placeholder="MM/YY"
+                    value={formData.expiryDate}
+                    onChange={(e) => handleInputChange('expiryDate', formatExpiryDate(e.target.value))}
+                    maxLength={5}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cvv">CVV</Label>
+                  <Input
+                    id="cvv"
+                    placeholder="123"
+                    value={formData.cvv}
+                    onChange={(e) => handleInputChange('cvv', e.target.value.replace(/\D/g, ''))}
+                    maxLength={4}
+                    type="password"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="cvv">CVV</Label>
+                <Label htmlFor="cardholderName">Cardholder Name</Label>
                 <Input
-                  id="cvv"
-                  placeholder="123"
-                  value={formData.cvv}
-                  onChange={(e) => handleInputChange('cvv', e.target.value.replace(/\D/g, ''))}
-                  maxLength={4}
-                  type="password"
+                  id="cardholderName"
+                  placeholder="John Doe"
+                  value={formData.cardholderName}
+                  onChange={(e) => handleInputChange('cardholderName', e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="cardholderName">Cardholder Name</Label>
-              <Input
-                id="cardholderName"
-                placeholder="John Doe"
-                value={formData.cardholderName}
-                onChange={(e) => handleInputChange('cardholderName', e.target.value)}
-              />
+            {/* Security Notice */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
+              <Lock className="w-4 h-4" />
+              <span>Your payment information is secure and encrypted</span>
             </div>
-          </div>
 
-          {/* Security Notice */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
-            <Lock className="w-4 h-4" />
-            <span>Your payment information is secure and encrypted</span>
+            {/* Payment Button */}
+            <Button 
+              onClick={handlePayment}
+              disabled={!isFormValid || loading}
+              className="w-full bg-gradient-to-r from-primary to-primary-glow hover:opacity-90 transition-opacity"
+              size="lg"
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></div>
+                  Processing Payment...
+                </div>
+              ) : (
+                `Pay $${price.toLocaleString()}`
+              )}
+            </Button>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          {/* Payment Button */}
-          <Button 
-            onClick={handlePayment}
-            disabled={!isFormValid || loading}
-            className="w-full bg-gradient-to-r from-primary to-primary-glow hover:opacity-90 transition-opacity"
-            size="lg"
-          >
-            {loading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></div>
-                Processing Payment...
-              </div>
-            ) : (
-              `Pay $${price.toLocaleString()}`
-            )}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+      />
+    </>
   );
 };
 

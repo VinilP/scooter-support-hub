@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthProtection } from "@/hooks/useAuthProtection";
+import AuthModal from "@/components/AuthModal";
 import { Package, Truck, CheckCircle, Clock, ArrowLeft } from "lucide-react";
 
 interface Order {
@@ -22,6 +24,7 @@ const OrderTracking = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { showAuthModal, setShowAuthModal, requireAuth, handleAuthSuccess } = useAuthProtection();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -52,6 +55,13 @@ const OrderTracking = () => {
 
     fetchOrder();
   }, [orderId, user]);
+
+  // Check if user is authenticated when component mounts
+  useEffect(() => {
+    if (!loading && !user) {
+      setShowAuthModal(true);
+    }
+  }, [loading, user, setShowAuthModal]);
 
   const getStatusInfo = (status: string) => {
     switch (status.toLowerCase()) {
@@ -110,19 +120,22 @@ const OrderTracking = () => {
     );
   }
 
+  // Show auth modal if user is not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
-            <p className="text-muted-foreground mb-4">Please log in to view your order details.</p>
-            <Button onClick={() => window.location.href = '/'}>
-              Go to Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Please authenticate to view order details...</p>
+          </div>
+        </div>
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => window.location.href = '/'}
+          onSuccess={() => setShowAuthModal(false)}
+        />
+      </>
     );
   }
 

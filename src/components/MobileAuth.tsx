@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Smartphone, Shield, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 import CountryCodeSelector, { countries, type Country } from "./CountryCodeSelector";
+import { supabase } from "@/integrations/supabase/client";
 
 const MobileAuth = () => {
   const [step, setStep] = useState<'phone' | 'otp' | 'success'>('phone');
@@ -64,13 +65,45 @@ const MobileAuth = () => {
       setIsLoading(true);
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
-      setIsLoading(false);
-      setStep('success');
       
-      // Redirect to dashboard after success
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 2000);
+      // For demo purposes, create a mock user session with phone number
+      const mockEmail = `${selectedCountry.dial}${phoneNumber}@mobile.demo`;
+      const mockPassword = 'demo123456';
+      
+      try {
+        // Try to sign in first, if that fails, sign up
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: mockEmail,
+          password: mockPassword,
+        });
+        
+        if (signInError) {
+          // User doesn't exist, create account
+          const { error: signUpError } = await supabase.auth.signUp({
+            email: mockEmail,
+            password: mockPassword,
+            options: {
+              data: {
+                phone_number: `${selectedCountry.dial}${phoneNumber}`,
+                display_name: `User ${phoneNumber}`
+              }
+            }
+          });
+          
+          if (signUpError) {
+            console.error('Sign up error:', signUpError);
+            throw signUpError;
+          }
+        }
+        
+        setStep('success');
+        setIsLoading(false);
+        
+        // Don't redirect automatically - let the auth context handle it
+      } catch (error) {
+        setIsLoading(false);
+        console.error('Authentication error:', error);
+      }
     }
   };
 
