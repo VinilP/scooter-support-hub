@@ -39,7 +39,6 @@ const Navigation = () => {
     { icon: Phone, label: "Call", href: "tel:1231231231" },
     { icon: Mail, label: "Email", href: "mailto:support@scootsupport.com" },
     { icon: User, label: "Log In", href: "/login" },
-    { icon: User, label: "Sign Up", href: "/login?signup=true" },
   ];
 
   return (
