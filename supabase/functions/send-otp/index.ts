@@ -45,7 +45,7 @@ serve(async (req) => {
     
     const body = new URLSearchParams({
       To: phoneNumber,
-      From: '+12345678901', // You'll need to replace this with your Twilio number
+      From: '+17622390928', // You'll need to replace this with your Twilio number
       Body: message,
     });
 
