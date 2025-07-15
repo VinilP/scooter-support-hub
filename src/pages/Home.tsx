@@ -1,4 +1,5 @@
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import ProductCarousel from "@/components/ProductCarousel";
 import ScooterProducts from "@/components/ScooterProducts";
 import OrderStatus from "@/components/OrderStatus";
@@ -8,7 +9,7 @@ const Home = () => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navigation />
       <ProductCarousel />
       <ScooterProducts />
@@ -19,6 +20,7 @@ const Home = () => {
           </div>
         </section>
       )}
+      <Footer />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { Menu, X, Zap, User, Package, Settings, MessageSquare } from "lucide-react";
+import { Menu, X, Zap, User, Package, Settings, MessageSquare, Phone, Mail } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,13 +13,31 @@ const Navigation = () => {
     await signOut();
   };
 
+  const handleChatClick = () => {
+    // Scroll to bottom to make chat widget visible and trigger it
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    // Small delay to let scroll complete, then trigger chat
+    setTimeout(() => {
+      const chatButton = document.querySelector('[data-chat-trigger]') as HTMLButtonElement;
+      if (chatButton) {
+        chatButton.click();
+      }
+    }, 500);
+  };
+
   const navItems = user ? [
     { icon: Package, label: "Orders", href: "/order-tracking" },
     { icon: Settings, label: "Admin FAQs", href: "/admin/faqs" },
     { icon: MessageSquare, label: "Support", href: "/support" },
+    { icon: MessageSquare, label: "Chat", href: "#", onClick: handleChatClick },
+    { icon: Phone, label: "Call", href: "tel:1231231231" },
+    { icon: Mail, label: "Email", href: "mailto:support@scootsupport.com" },
     { icon: User, label: "Log Out", href: "#", onClick: handleLogout },
   ] : [
     { icon: MessageSquare, label: "Support", href: "/support" },
+    { icon: MessageSquare, label: "Chat", href: "#", onClick: handleChatClick },
+    { icon: Phone, label: "Call", href: "tel:1231231231" },
+    { icon: Mail, label: "Email", href: "mailto:support@scootsupport.com" },
     { icon: User, label: "Log In", href: "/login" },
     { icon: User, label: "Sign Up", href: "/login?signup=true" },
   ];
@@ -51,6 +69,11 @@ const Navigation = () => {
                     <item.icon className="h-4 w-4" />
                     <span>{item.label}</span>
                   </>
+                ) : item.href.startsWith('tel:') || item.href.startsWith('mailto:') ? (
+                  <a href={item.href}>
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </a>
                 ) : (
                   <Link to={item.href}>
                     <item.icon className="h-4 w-4" />
@@ -93,6 +116,11 @@ const Navigation = () => {
                   <item.icon className="h-4 w-4" />
                   <span>{item.label}</span>
                 </>
+              ) : item.href.startsWith('tel:') || item.href.startsWith('mailto:') ? (
+                <a href={item.href}>
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </a>
               ) : (
                 <Link to={item.href}>
                   <item.icon className="h-4 w-4" />

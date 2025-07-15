@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import QuickSupport from "@/components/QuickSupport";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,18 @@ import heroImage from "@/assets/hero-scooter.jpg";
 
 const Support = () => {
   const [selectedCategory, setSelectedCategory] = useState("general");
+
+  const handleChatClick = () => {
+    // Scroll to bottom to make chat widget visible and trigger it
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    // Small delay to let scroll complete, then trigger chat
+    setTimeout(() => {
+      const chatButton = document.querySelector('[data-chat-trigger]') as HTMLButtonElement;
+      if (chatButton) {
+        chatButton.click();
+      }
+    }, 500);
+  };
 
   const supportCategories = [
     { id: "general", label: "General Support", icon: MessageSquare },
@@ -25,7 +38,7 @@ const Support = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navigation />
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-muted/20 to-background">
@@ -77,17 +90,32 @@ const Support = () => {
               {/* Contact Options */}
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Button className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary-glow text-primary-foreground hover:opacity-90">
+                  <Button 
+                    onClick={handleChatClick}
+                    className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary-glow text-primary-foreground hover:opacity-90"
+                  >
                     <MessageSquare className="w-4 h-4" />
                     Start Chat
                   </Button>
-                  <Button variant="outline" className="flex items-center gap-2 border-primary/30 text-primary hover:bg-primary/10">
-                    <Phone className="w-4 h-4" />
-                    Call Support
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                    asChild
+                  >
+                    <a href="tel:1231231231">
+                      <Phone className="w-4 h-4" />
+                      Call Support
+                    </a>
                   </Button>
-                  <Button variant="outline" className="flex items-center gap-2 border-primary/30 text-primary hover:bg-primary/10">
-                    <Mail className="w-4 h-4" />
-                    Email Us
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                    asChild
+                  >
+                    <a href="mailto:support@scootsupport.com">
+                      <Mail className="w-4 h-4" />
+                      Email Us
+                    </a>
                   </Button>
                 </div>
                 
@@ -146,6 +174,8 @@ const Support = () => {
       <div className="pt-0">
         <QuickSupport />
       </div>
+      
+      <Footer />
     </div>
   );
 };

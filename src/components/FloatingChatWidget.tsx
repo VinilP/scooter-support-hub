@@ -385,6 +385,7 @@ const FloatingChatWidget = () => {
       {!isExpanded && (
         <Button
           onClick={() => setIsExpanded(true)}
+          data-chat-trigger
           className={cn(
             "h-14 w-14 rounded-full shadow-lg transition-all duration-300",
             "bg-gradient-to-r from-primary to-primary-glow",
