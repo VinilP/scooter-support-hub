@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.get-conversations]
 verify_jwt = true
+
+[functions.save-chat]
+verify_jwt = true
