@@ -13,6 +13,7 @@ interface FAQ {
   id?: string;
   question: string;
   answer: string;
+  tags?: string[];
   category?: string;
   is_active?: boolean;
   display_order?: number;
@@ -86,6 +87,7 @@ serve(async (req) => {
           .insert({
             question: newFaq.question,
             answer: newFaq.answer,
+            tags: newFaq.tags || [],
             category: newFaq.category || 'general',
             is_active: newFaq.is_active ?? true,
             display_order: newFaq.display_order || 0
@@ -113,6 +115,7 @@ serve(async (req) => {
           .update({
             question: updateFaq.question,
             answer: updateFaq.answer,
+            tags: updateFaq.tags,
             category: updateFaq.category,
             is_active: updateFaq.is_active,
             display_order: updateFaq.display_order,

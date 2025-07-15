@@ -8,16 +8,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Save, X, ArrowLeft } from "lucide-react";
+import { Plus, Edit, Trash2, Save, X, ArrowLeft, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import TagInput from "@/components/TagInput";
 
 interface FAQ {
   id: string;
   question: string;
   answer: string;
+  tags: string[];
   category: string;
   is_active: boolean;
   display_order: number;
@@ -29,12 +31,16 @@ const AdminFAQs = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [filteredFaqs, setFilteredFaqs] = useState<FAQ[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     question: "",
     answer: "",
+    tags: [] as string[],
     category: "general",
     is_active: true,
     display_order: 0
@@ -49,11 +55,41 @@ const AdminFAQs = () => {
     { value: "troubleshooting", label: "Troubleshooting" }
   ];
 
+  const commonTags = [
+    "charging", "battery", "power", "speed", "range", "performance",
+    "maintenance", "care", "waterproof", "safety", "troubleshooting",
+    "repair", "warranty", "tire", "brake", "motor", "bluetooth",
+    "app", "scooter", "electric", "general", "help"
+  ];
+
   useEffect(() => {
     if (user) {
       fetchFAQs();
     }
   }, [user]);
+
+  useEffect(() => {
+    let filtered = faqs;
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(faq => 
+        faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        faq.answer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        faq.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    // Filter by selected tag
+    if (selectedTag) {
+      filtered = filtered.filter(faq => faq.tags.includes(selectedTag));
+    }
+
+    setFilteredFaqs(filtered);
+  }, [faqs, searchTerm, selectedTag]);
+
+  // Get all unique tags from FAQs
+  const allTags = Array.from(new Set(faqs.flatMap(faq => faq.tags))).sort();
 
   const fetchFAQs = async () => {
     try {
@@ -65,6 +101,7 @@ const AdminFAQs = () => {
 
       if (data.success) {
         setFaqs(data.data);
+        setFilteredFaqs(data.data);
       }
     } catch (error: any) {
       toast({
@@ -114,6 +151,7 @@ const AdminFAQs = () => {
     setFormData({
       question: faq.question,
       answer: faq.answer,
+      tags: faq.tags || [],
       category: faq.category,
       is_active: faq.is_active,
       display_order: faq.display_order
@@ -152,6 +190,7 @@ const AdminFAQs = () => {
     setFormData({
       question: "",
       answer: "",
+      tags: [],
       category: "general",
       is_active: true,
       display_order: 0
@@ -190,7 +229,18 @@ const AdminFAQs = () => {
               <h1 className="text-2xl font-bold text-gray-900">FAQ Administration</h1>
             </div>
             
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Search FAQs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64 border-gray-300"
+                />
+              </div>
+              
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button 
                   onClick={() => resetForm()}
@@ -231,6 +281,17 @@ const AdminFAQs = () => {
                       required
                       rows={4}
                       className="border-gray-300 focus:border-gray-500"
+                    />
+                  </div>
+                  
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="tags" className="text-gray-700">Tags</Label>
+                    <TagInput
+                      tags={formData.tags}
+                      onChange={(tags) => setFormData({ ...formData, tags })}
+                      suggestions={commonTags}
+                      placeholder="Add tags to categorize this FAQ..."
                     />
                   </div>
                   
@@ -296,28 +357,54 @@ const AdminFAQs = () => {
                 </form>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={selectedTag === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedTag(null)}
+            className={selectedTag === null ? "bg-gray-900 text-white" : "border-gray-300 text-gray-600"}
+          >
+            All Tags ({faqs.length})
+          </Button>
+          {allTags.map((tag) => (
+            <Button
+              key={tag}
+              variant={selectedTag === tag ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+              className={selectedTag === tag ? "bg-gray-900 text-white" : "border-gray-300 text-gray-600"}
+            >
+              {tag} ({faqs.filter(faq => faq.tags.includes(tag)).length})
+            </Button>
+          ))}
+        </div>
+      </div>
+
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
         ) : (
           <div className="grid gap-6">
-            {faqs.length === 0 ? (
+            {filteredFaqs.length === 0 ? (
               <Card className="border-gray-200">
                 <CardContent className="pt-6">
                   <p className="text-center text-gray-500">
-                    No FAQs found. Create your first FAQ to get started.
+                    {searchTerm || selectedTag ? "No FAQs match your filters." : "No FAQs found. Create your first FAQ to get started."}
                   </p>
                 </CardContent>
               </Card>
             ) : (
-              faqs.map((faq) => (
+              filteredFaqs.map((faq) => (
                 <Card key={faq.id} className="border-gray-200 hover:shadow-md transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
@@ -336,6 +423,18 @@ const AdminFAQs = () => {
                           <Badge variant="outline" className="text-xs border-gray-300 text-gray-600">
                             {categories.find(c => c.value === faq.category)?.label || faq.category}
                           </Badge>
+                          <div className="flex flex-wrap gap-1">
+                            {faq.tags.map((tag) => (
+                              <Badge 
+                                key={tag}
+                                variant="secondary" 
+                                className="text-xs bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer"
+                                onClick={() => setSelectedTag(tag)}
+                              >
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
                           <span className="text-xs text-gray-400">
                             Order: {faq.display_order}
                           </span>
