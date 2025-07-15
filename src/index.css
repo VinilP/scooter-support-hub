@@ -48,6 +48,18 @@ All colors MUST be HSL.
     /* Shadows */
     --shadow-electric: 0 10px 30px -10px hsl(217 91% 60% / 0.3);
     --shadow-glow: 0 0 40px hsl(217 91% 70% / 0.4);
+    
+    /* Liquid Glass Theme */
+    --glass-bg: hsl(220 14% 96% / 0.8);
+    --glass-border: hsl(0 0% 100% / 0.2);
+    --glass-shadow: 0 8px 32px hsl(217 91% 60% / 0.15);
+    --glass-backdrop: blur(20px);
+    
+    /* Widget specific */
+    --widget-bg: hsl(220 14% 96% / 0.95);
+    --widget-border: hsl(0 0% 100% / 0.3);
+    --widget-shadow: 0 20px 40px hsl(217 91% 60% / 0.1);
+    --widget-gradient: linear-gradient(135deg, hsl(220 14% 96% / 0.9), hsl(210 40% 98% / 0.8));
 
     --radius: 0.5rem;
 
@@ -114,5 +126,23 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .glass-morphism {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
+  }
+  
+  .widget-glass {
+    background: var(--widget-gradient);
+    border: 1px solid var(--widget-border);
+    box-shadow: var(--widget-shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 }

@@ -1,4 +1,4 @@
-import { Menu, X, Zap, User, MessageCircle, Package, Settings } from "lucide-react";
+import { Menu, X, Zap, User, Package, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,6 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
-    { icon: MessageCircle, label: "Support", href: "/chat" },
     { icon: Package, label: "Orders", href: "/orders" },
     { icon: User, label: "Login", href: "/login" },
     { icon: Settings, label: "Admin", href: "/admin" },

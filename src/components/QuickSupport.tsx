@@ -71,11 +71,14 @@ const QuickSupport = () => {
           </CardHeader>
           <CardContent>
             <Button 
-              onClick={() => window.location.href = '/chat'}
               variant="electric" 
               className="w-full"
+              onClick={() => {
+                // Scroll to bottom to make the floating chat widget more visible
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+              }}
             >
-              Start Chat Support
+              Use Chat Widget Below
             </Button>
           </CardContent>
         </Card>
