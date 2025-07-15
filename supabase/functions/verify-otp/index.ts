@@ -100,23 +100,30 @@ serve(async (req) => {
       }
     }
 
-    // Generate a session token for the user
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
+    // For existing users, we need to generate a session token
+    // We'll use the admin.generateLink to create an access token
+    const tempEmail = `${phoneNumber.replace(/[^0-9]/g, '')}@phone.auth`;
+    
+    // Generate an access token for the existing user
+    const { data: tokenData, error: tokenError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
-      email: `${phoneNumber.replace(/[^0-9]/g, '')}@phone.auth`,
+      email: tempEmail,
     });
 
-    if (sessionError) {
-      console.error('Error generating session:', sessionError);
-      throw new Error('Failed to create session');
+    if (tokenError) {
+      console.error('Error generating access token:', tokenError);
+      throw new Error('Failed to generate access token');
     }
 
     return new Response(
       JSON.stringify({ 
         success: true,
         message: 'OTP verified successfully',
-        accessToken: sessionData.properties?.access_token,
-        refreshToken: sessionData.properties?.refresh_token,
+        user: { id: userId, phone: phoneNumber },
+        access_token: tokenData.properties?.access_token,
+        refresh_token: tokenData.properties?.refresh_token,
+        expires_at: tokenData.properties?.expires_at,
+        token_type: 'bearer',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

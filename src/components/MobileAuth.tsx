@@ -140,15 +140,20 @@ const MobileAuth = () => {
         throw new Error(data.error || 'Failed to verify OTP');
       }
 
-      // If we have tokens, set the session
-      if (data.accessToken && data.refreshToken) {
+      // If we have session data, set the session
+      console.log('OTP verification response:', data);
+      if (data.access_token && data.refresh_token) {
+        console.log('Setting session with tokens');
         const { error: sessionError } = await supabase.auth.setSession({
-          access_token: data.accessToken,
-          refresh_token: data.refreshToken,
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
         });
 
         if (sessionError) {
+          console.error('Session error:', sessionError);
           throw sessionError;
+        } else {
+          console.log('Session set successfully');
         }
       }
 
@@ -185,7 +190,7 @@ const MobileAuth = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6a2hpbGxycWdzc2l2cm51ZmhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NTQxMjIsImV4cCI6MjA2ODEzMDEyMn0.YwGn4Ne8qB6XEO7N4f9GEo7N4f9GEm0wu6zlcAjpid9z-DfepeY`,
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6a2hpbGxycWdzc2l2cm51ZmhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NTQxMjIsImV4cCI6MjA2ODEzMDEyMn0.YwGn4Ne8qB6XEO7N4f9GEm0wu6zlcAjpid9z-DfepeY`,
         },
         body: JSON.stringify({
           phoneNumber: fullPhoneNumber,
