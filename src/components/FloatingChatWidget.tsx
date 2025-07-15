@@ -2,12 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Send, Paperclip, User, Bot, FileText, Image, X, MessageCircle, Minimize2, LogIn, LogOut } from "lucide-react";
+import { Send, Paperclip, User, Bot, FileText, Image, X, MessageCircle, Minimize2, LogIn, LogOut, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AuthModal from "./AuthModal";
+import EscalationModal from "./EscalationModal";
 
 interface Message {
   id: string;
@@ -41,6 +42,14 @@ const FloatingChatWidget = () => {
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isEscalationModalOpen, setIsEscalationModalOpen] = useState(false);
+  const [escalationData, setEscalationData] = useState<{
+    messageId: string;
+    question: string;
+    answer: string;
+    fileUrl?: string;
+  } | null>(null);
+  const [isSubmittingEscalation, setIsSubmittingEscalation] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>(getInitialMessages());
   const [inputValue, setInputValue] = useState('');
@@ -318,6 +327,48 @@ const FloatingChatWidget = () => {
     });
   };
 
+  const handleEscalateQuery = (messageId: string, question: string, answer: string, fileUrl?: string) => {
+    setEscalationData({ messageId, question, answer, fileUrl });
+    setIsEscalationModalOpen(true);
+  };
+
+  const handleSubmitEscalation = async (feedback: string) => {
+    if (!escalationData || !currentConversationId) return;
+
+    setIsSubmittingEscalation(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('submit-query', {
+        body: {
+          conversationId: currentConversationId,
+          originalQuestion: escalationData.question,
+          aiResponse: escalationData.answer,
+          fileUrl: escalationData.fileUrl,
+          userFeedback: feedback || undefined,
+          escalationReason: 'not_helpful'
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Query Submitted",
+        description: "Your query has been submitted for review. Our team will get back to you soon.",
+      });
+
+      setIsEscalationModalOpen(false);
+      setEscalationData(null);
+
+    } catch (error: any) {
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Failed to submit query for review",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingEscalation(false);
+    }
+  };
+
   const handleSignOut = async () => {
     // Clear chat history before signing out
     clearChatHistory();
@@ -449,6 +500,29 @@ const FloatingChatWidget = () => {
                   {/* Message text */}
                   <p className="whitespace-pre-wrap">{message.content}</p>
                   
+                  {/* Not helpful button for bot messages */}
+                  {message.sender === 'bot' && user && message.id !== '1' && (
+                    <div className="mt-3 pt-2 border-t border-border/20">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          // Find the previous user message to get the question
+                          const messageIndex = messages.findIndex(m => m.id === message.id);
+                          const prevUserMessage = messages.slice(0, messageIndex).reverse().find(m => m.sender === 'user');
+                          const question = prevUserMessage?.content || 'Previous question not found';
+                          const fileUrl = prevUserMessage?.file ? 'file-attached' : undefined;
+                          
+                          handleEscalateQuery(message.id, question, message.content, fileUrl);
+                        }}
+                        className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <Flag className="w-3 h-3 mr-1" />
+                        Not helpful? Submit query
+                      </Button>
+                    </div>
+                  )}
+                  
                   {/* Timestamp */}
                   <p className={cn(
                     "text-xs mt-1 opacity-70",
@@ -554,6 +628,13 @@ const FloatingChatWidget = () => {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={handleAuthSuccess}
+      />
+      
+      <EscalationModal
+        isOpen={isEscalationModalOpen}
+        onClose={() => setIsEscalationModalOpen(false)}
+        onSubmit={handleSubmitEscalation}
+        isSubmitting={isSubmittingEscalation}
       />
     </div>
   );

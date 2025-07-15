@@ -76,6 +76,56 @@ export type Database = {
         }
         Relationships: []
       }
+      escalated_queries: {
+        Row: {
+          ai_response: string
+          conversation_id: string | null
+          created_at: string
+          escalation_reason: string | null
+          file_url: string | null
+          id: string
+          original_question: string
+          status: string | null
+          updated_at: string
+          user_feedback: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_response: string
+          conversation_id?: string | null
+          created_at?: string
+          escalation_reason?: string | null
+          file_url?: string | null
+          id?: string
+          original_question: string
+          status?: string | null
+          updated_at?: string
+          user_feedback?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_response?: string
+          conversation_id?: string | null
+          created_at?: string
+          escalation_reason?: string | null
+          file_url?: string | null
+          id?: string
+          original_question?: string
+          status?: string | null
+          updated_at?: string
+          user_feedback?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalated_queries_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string

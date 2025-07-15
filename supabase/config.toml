@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.save-chat]
 verify_jwt = true
+
+[functions.submit-query]
+verify_jwt = true
