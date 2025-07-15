@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Smartphone, Shield, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 import CountryCodeSelector, { countries, type Country } from "./CountryCodeSelector";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const MobileAuth = () => {
   const [step, setStep] = useState<'phone' | 'otp' | 'success'>('phone');
@@ -16,6 +17,7 @@ const MobileAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const { toast } = useToast();
 
   // Countdown timer for resend OTP
   useEffect(() => {
@@ -26,17 +28,60 @@ const MobileAuth = () => {
   }, [countdown]);
 
   const handleSendOTP = async () => {
-    if (phoneNumber) {
-      setIsLoading(true);
-      // Combine country code with phone number
+    if (!phoneNumber.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
       const fullPhoneNumber = `${selectedCountry.dial}${phoneNumber}`;
-      console.log('Sending OTP to:', fullPhoneNumber);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setIsLoading(false);
+      const response = await fetch('https://hzkhillrqgssivrnufhg.supabase.co/functions/v1/send-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6a2hpbGxycWdzc2l2cm51ZmhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NTQxMjIsImV4cCI6MjA2ODEzMDEyMn0.YwGn4Ne8qB6XEO7N4f9GEm0wu6zlcAjpid9z-DfepeY`,
+        },
+        body: JSON.stringify({
+          phoneNumber: fullPhoneNumber,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send OTP');
+      }
+      
       setStep('otp');
-      setCountdown(30); // 30 second countdown for resend
+      setCountdown(30);
+      toast({
+        title: "OTP Sent",
+        description: `Verification code sent to ${fullPhoneNumber}`,
+      });
+
+      // For development, show the OTP in console
+      if (data.otp) {
+        console.log('Development OTP:', data.otp);
+        toast({
+          title: "Development Mode",
+          description: `OTP: ${data.otp} (check console)`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send OTP. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -60,59 +105,111 @@ const MobileAuth = () => {
   };
 
   const handleVerifyOTP = async () => {
-    const otpString = otp.join('');
-    if (otpString.length === 6) {
-      setIsLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+    const otpValue = otp.join('');
+    if (otpValue.length !== 6) {
+      toast({
+        title: "Error",
+        description: "Please enter a complete 6-digit OTP",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const fullPhoneNumber = `${selectedCountry.dial}${phoneNumber}`;
       
-      // For demo purposes, create a mock user session with phone number
-      const mockEmail = `${selectedCountry.dial.replace('+', '')}${phoneNumber}@mobile.demo`;
-      const mockPassword = 'demo123456';
-      
-      try {
-        // Try to sign in first, if that fails, sign up
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: mockEmail,
-          password: mockPassword,
-        });
-        
-        if (signInError) {
-          // User doesn't exist, create account
-          const { error: signUpError } = await supabase.auth.signUp({
-            email: mockEmail,
-            password: mockPassword,
-            options: {
-              data: {
-                phone_number: `${selectedCountry.dial}${phoneNumber}`,
-                display_name: `User ${phoneNumber}`
-              }
-            }
-          });
-          
-          if (signUpError) {
-            console.error('Sign up error:', signUpError);
-            throw signUpError;
-          }
-        }
-        
-        setStep('success');
-        setIsLoading(false);
-        
-        // Don't redirect automatically - let the auth context handle it
-      } catch (error) {
-        setIsLoading(false);
-        console.error('Authentication error:', error);
+      const response = await fetch('https://hzkhillrqgssivrnufhg.supabase.co/functions/v1/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6a2hpbGxycWdzc2l2cm51ZmhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NTQxMjIsImV4cCI6MjA2ODEzMDEyMn0.YwGn4Ne8qB6XEO7N4f9GEm0wu6zlcAjpid9z-DfepeY`,
+        },
+        body: JSON.stringify({
+          phoneNumber: fullPhoneNumber,
+          otp: otpValue,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to verify OTP');
       }
+
+      // If we have tokens, set the session
+      if (data.accessToken && data.refreshToken) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.accessToken,
+          refresh_token: data.refreshToken,
+        });
+
+        if (sessionError) {
+          throw sessionError;
+        }
+      }
+
+      setStep('success');
+      toast({
+        title: "Success",
+        description: "Phone number verified successfully!",
+      });
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Invalid OTP. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleResendOTP = async () => {
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    setCountdown(30);
     setOtp(['', '', '', '', '', '']);
+    setIsLoading(true);
+    
+    try {
+      const fullPhoneNumber = `${selectedCountry.dial}${phoneNumber}`;
+      
+      const response = await fetch('https://hzkhillrqgssivrnufhg.supabase.co/functions/v1/send-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6a2hpbGxycWdzc2l2cm51ZmhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NTQxMjIsImV4cCI6MjA2ODEzMDEyMn0.YwGn4Ne8qB6XEO7N4f9GEo7N4f9GEm0wu6zlcAjpid9z-DfepeY`,
+        },
+        body: JSON.stringify({
+          phoneNumber: fullPhoneNumber,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to resend OTP');
+      }
+
+      setCountdown(30);
+      toast({
+        title: "OTP Resent",
+        description: `Verification code sent to ${fullPhoneNumber}`,
+      });
+
+      // For development, show the OTP in console
+      if (data.otp) {
+        console.log('Development OTP:', data.otp);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend OTP. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const otpString = otp.join('');
