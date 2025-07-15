@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-const ADMIN_PHONE_NUMBER = '1231231231';
+const ADMIN_PHONE_NUMBER = '9890236593';
 
 export const useAdminAuth = () => {
   const { user } = useAuth();
