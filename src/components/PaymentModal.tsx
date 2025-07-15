@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CreditCard, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PaymentModalProps {
   scooterName: string;
@@ -15,6 +17,7 @@ interface PaymentModalProps {
 const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -22,6 +25,10 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
     cardholderName: ''
   });
   const { toast } = useToast();
+
+  const generateOrderId = () => {
+    return 'ORD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -53,24 +60,61 @@ const PaymentModal = ({ scooterName, price, children }: PaymentModalProps) => {
   const handlePayment = async () => {
     setLoading(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setLoading(false);
-    setOpen(false);
-    
-    toast({
-      title: "Payment Successful! 🎉",
-      description: `Your ${scooterName} has been ordered successfully. You'll receive a confirmation email shortly.`,
-    });
-    
-    // Reset form
-    setFormData({
-      cardNumber: '',
-      expiryDate: '',
-      cvv: '',
-      cardholderName: ''
-    });
+    try {
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Generate order ID
+      const orderId = generateOrderId();
+      
+      // Store order in database
+      if (user) {
+        const { error } = await supabase
+          .from('orders')
+          .insert({
+            order_id: orderId,
+            model: scooterName,
+            status: 'processing',
+            user_id: user.id,
+            order_date: new Date().toISOString(),
+            delivery_eta: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
+          });
+
+        if (error) {
+          console.error('Error saving order:', error);
+          throw new Error('Failed to save order');
+        }
+      }
+      
+      setLoading(false);
+      setOpen(false);
+      
+      toast({
+        title: "Payment Successful! 🎉",
+        description: `Your ${scooterName} has been ordered successfully. Order ID: ${orderId}`,
+      });
+      
+      // Reset form
+      setFormData({
+        cardNumber: '',
+        expiryDate: '',
+        cvv: '',
+        cardholderName: ''
+      });
+
+      // Redirect to order tracking page
+      setTimeout(() => {
+        window.location.href = `/order-tracking/${orderId}`;
+      }, 2000);
+      
+    } catch (error) {
+      setLoading(false);
+      toast({
+        title: "Payment Failed",
+        description: "There was an error processing your payment. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const isFormValid = formData.cardNumber.length >= 19 && 
