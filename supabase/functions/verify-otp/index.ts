@@ -100,15 +100,8 @@ serve(async (req) => {
       }
     }
 
-    // For existing users, we need to generate a session token
-    // We'll use the admin.generateLink to create an access token
-    const tempEmail = `${phoneNumber.replace(/[^0-9]/g, '')}@phone.auth`;
-    
-    // Generate an access token for the existing user
-    const { data: tokenData, error: tokenError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: tempEmail,
-    });
+    // Create a proper session for the user using admin.generateAccessToken
+    const { data: tokenData, error: tokenError } = await supabase.auth.admin.generateAccessToken(userId);
 
     if (tokenError) {
       console.error('Error generating access token:', tokenError);
@@ -120,9 +113,9 @@ serve(async (req) => {
         success: true,
         message: 'OTP verified successfully',
         user: { id: userId, phone: phoneNumber },
-        access_token: tokenData.properties?.access_token,
-        refresh_token: tokenData.properties?.refresh_token,
-        expires_at: tokenData.properties?.expires_at,
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expires_at: tokenData.expires_at,
         token_type: 'bearer',
       }),
       {
