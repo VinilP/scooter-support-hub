@@ -28,10 +28,18 @@ const STORAGE_KEYS = {
   CHAT_STATE: 'scootsupport_chat_state'
 };
 
+interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  tags: string[];
+}
+
 const getInitialMessages = (): Message[] => [
   {
     id: '1',
-    content: "Hi! I'm here to help you with any questions about your electric scooter. How can I assist you today?",
+    content: "Hi! I'm here to help you with any questions about your electric scooter. Here are some frequently asked questions you can click on, or feel free to type your own question:",
     sender: 'bot',
     timestamp: new Date(),
   }
@@ -56,10 +64,29 @@ const FloatingChatWidget = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [showFaqSuggestions, setShowFaqSuggestions] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load chat history from localStorage on mount
+  // Load FAQs and chat history on mount
   useEffect(() => {
+    const loadFaqs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('faqs')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true })
+          .order('created_at', { ascending: true })
+          .limit(5);
+
+        if (error) throw error;
+        setFaqs(data || []);
+      } catch (error) {
+        console.error('Error loading FAQs:', error);
+      }
+    };
+
     const loadChatHistory = () => {
       try {
         const storedMessages = localStorage.getItem(STORAGE_KEYS.MESSAGES);
@@ -74,6 +101,10 @@ const FloatingChatWidget = () => {
             timestamp: new Date(msg.timestamp)
           }));
           setMessages(messagesWithDates);
+          // If there are stored messages beyond the initial one, hide FAQ suggestions
+          if (messagesWithDates.length > 1) {
+            setShowFaqSuggestions(false);
+          }
         }
 
         if (storedConversationId) {
@@ -92,6 +123,7 @@ const FloatingChatWidget = () => {
       }
     };
 
+    loadFaqs();
     loadChatHistory();
   }, []);
 
@@ -145,9 +177,31 @@ const FloatingChatWidget = () => {
       localStorage.removeItem(STORAGE_KEYS.CHAT_STATE);
       setMessages(getInitialMessages());
       setCurrentConversationId(null);
+      setShowFaqSuggestions(true);
     } catch (error) {
       console.error('Error clearing chat history:', error);
     }
+  };
+
+  const handleFaqClick = (faq: FAQ) => {
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: faq.question,
+      sender: 'user',
+      timestamp: new Date(),
+    };
+
+    // Add bot response
+    const botMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      content: faq.answer,
+      sender: 'bot',
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage, botMessage]);
+    setShowFaqSuggestions(false);
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -228,6 +282,9 @@ const FloatingChatWidget = () => {
       setIsAuthModalOpen(true);
       return;
     }
+
+    // Hide FAQ suggestions once user starts typing their own messages
+    setShowFaqSuggestions(false);
 
     let fileContext = '';
     let fileUrl = '';
@@ -534,6 +591,29 @@ const FloatingChatWidget = () => {
                 </div>
               </div>
             ))}
+
+            {/* FAQ Suggestions */}
+            {showFaqSuggestions && faqs.length > 0 && (
+              <div className="space-y-2 animate-fade-in">
+                <div className="text-xs text-muted-foreground text-center mb-2">
+                  Click on a question below:
+                </div>
+                {faqs.map((faq) => (
+                  <Button
+                    key={faq.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleFaqClick(faq)}
+                    className="w-full text-left p-3 h-auto glass-morphism hover:bg-primary/10 justify-start text-xs"
+                  >
+                    <div className="flex items-start gap-2">
+                      <Bot className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                      <span className="text-left break-words">{faq.question}</span>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            )}
 
             {/* Typing indicator */}
             {isTyping && (
