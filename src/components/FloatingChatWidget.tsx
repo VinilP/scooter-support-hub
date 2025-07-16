@@ -185,7 +185,7 @@ const FloatingChatWidget = () => {
     }
   };
 
-  const handleFaqClick = (faq: FAQ) => {
+  const handleFaqClick = async (faq: FAQ) => {
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -194,16 +194,84 @@ const FloatingChatWidget = () => {
       timestamp: new Date(),
     };
 
-    // Add bot response
-    const botMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      content: faq.answer,
-      sender: 'bot',
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage, botMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setShowFaqSuggestions(false);
+
+    // Special handling for order status FAQ
+    if (faq.question === "What is my order status?") {
+      setIsTyping(true);
+      
+      try {
+        if (!user) {
+          const responseMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            content: "Please log in to view your order status.",
+            sender: 'bot',
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, responseMessage]);
+          setIsTyping(false);
+          return;
+        }
+
+        // Fetch user orders
+        const { data: orders, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('order_date', { ascending: false });
+
+        if (error) throw error;
+
+        let responseContent = "";
+        if (!orders || orders.length === 0) {
+          responseContent = "You don't have any orders yet. Would you like to browse our scooter products?";
+        } else {
+          responseContent = "Here are your current orders:\n\n";
+          orders.forEach((order, index) => {
+            const orderDate = new Date(order.order_date).toLocaleDateString();
+            const deliveryEta = order.delivery_eta 
+              ? new Date(order.delivery_eta).toLocaleDateString()
+              : "TBD";
+            
+            responseContent += `${index + 1}. **Order ${order.order_id}**\n`;
+            responseContent += `   • Model: ${order.model}\n`;
+            responseContent += `   • Status: ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}\n`;
+            responseContent += `   • Order Date: ${orderDate}\n`;
+            responseContent += `   • Estimated Delivery: ${deliveryEta}\n\n`;
+          });
+        }
+
+        const responseMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: responseContent,
+          sender: 'bot',
+          timestamp: new Date(),
+        };
+
+        setMessages(prev => [...prev, responseMessage]);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        const responseMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: "I'm sorry, I couldn't retrieve your order information right now. Please try again later or contact our support team.",
+          sender: 'bot',
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, responseMessage]);
+      } finally {
+        setIsTyping(false);
+      }
+    } else {
+      // Regular FAQ response
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: faq.answer,
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, botMessage]);
+    }
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
