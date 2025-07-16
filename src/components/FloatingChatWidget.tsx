@@ -210,6 +210,7 @@ const FloatingChatWidget = () => {
             timestamp: new Date(),
           };
           setMessages(prev => [...prev, responseMessage]);
+          addFollowUpMessage();
           setIsTyping(false);
           return;
         }
@@ -250,6 +251,12 @@ const FloatingChatWidget = () => {
         };
 
         setMessages(prev => [...prev, responseMessage]);
+        
+        // Add follow-up message after a short delay
+        setTimeout(() => {
+          addFollowUpMessage();
+        }, 1000);
+
       } catch (error) {
         console.error('Error fetching orders:', error);
         const responseMessage: Message = {
@@ -259,6 +266,7 @@ const FloatingChatWidget = () => {
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, responseMessage]);
+        addFollowUpMessage();
       } finally {
         setIsTyping(false);
       }
@@ -271,7 +279,33 @@ const FloatingChatWidget = () => {
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, botMessage]);
+      
+      // Add follow-up message after a short delay
+      setTimeout(() => {
+        addFollowUpMessage();
+      }, 1000);
     }
+  };
+
+  const addFollowUpMessage = () => {
+    const followUpMessage: Message = {
+      id: (Date.now() + 2).toString(),
+      content: "Is there anything else I can help you with? You can type your question or click 'Show FAQ Options' to see common questions.",
+      sender: 'bot',
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, followUpMessage]);
+  };
+
+  const showFaqOptions = () => {
+    setShowFaqSuggestions(true);
+    const faqMessage: Message = {
+      id: Date.now().toString(),
+      content: "Here are some frequently asked questions you can click on:",
+      sender: 'bot',
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, faqMessage]);
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -637,8 +671,23 @@ const FloatingChatWidget = () => {
                   {/* Message text */}
                   <p className="whitespace-pre-wrap">{message.content}</p>
                   
+                  {/* Show FAQ Options button for follow-up messages */}
+                  {message.sender === 'bot' && message.content.includes("Is there anything else I can help you with?") && (
+                    <div className="mt-3 pt-2 border-t border-border/20">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={showFaqOptions}
+                        className="h-7 px-3 text-xs glass-morphism hover:bg-primary/10"
+                      >
+                        <Bot className="w-3 h-3 mr-1" />
+                        Show FAQ Options
+                      </Button>
+                    </div>
+                  )}
+                  
                   {/* Not helpful button for bot messages */}
-                  {message.sender === 'bot' && user && message.id !== '1' && (
+                  {message.sender === 'bot' && user && message.id !== '1' && !message.content.includes("Is there anything else I can help you with?") && (
                     <div className="mt-3 pt-2 border-t border-border/20">
                       <Button
                         variant="ghost"
