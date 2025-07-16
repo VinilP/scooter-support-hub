@@ -72,6 +72,7 @@ const FloatingChatWidget = () => {
   useEffect(() => {
     const loadFaqs = async () => {
       try {
+        console.log('Loading FAQs...');
         const { data, error } = await supabase
           .from('faqs')
           .select('*')
@@ -81,6 +82,7 @@ const FloatingChatWidget = () => {
           .limit(5);
 
         if (error) throw error;
+        console.log('FAQs loaded:', data);
         setFaqs(data || []);
       } catch (error) {
         console.error('Error loading FAQs:', error);
@@ -503,6 +505,15 @@ const FloatingChatWidget = () => {
                 >
                   <Minimize2 className="h-4 w-4" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearChatHistory}
+                  className="h-8 w-8 p-0 hover:bg-muted/50"
+                  title="Clear chat"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
               </div>
             </div>
           </div>
@@ -593,27 +604,34 @@ const FloatingChatWidget = () => {
             ))}
 
             {/* FAQ Suggestions */}
-            {showFaqSuggestions && faqs.length > 0 && (
-              <div className="space-y-2 animate-fade-in">
-                <div className="text-xs text-muted-foreground text-center mb-2">
-                  Click on a question below:
+            {(() => {
+              console.log('FAQ Debug:', { 
+                showFaqSuggestions, 
+                faqsLength: faqs.length, 
+                faqs: faqs.slice(0, 2) // Just first 2 for debugging
+              });
+              return showFaqSuggestions && faqs.length > 0 && (
+                <div className="space-y-2 animate-fade-in">
+                  <div className="text-xs text-muted-foreground text-center mb-2">
+                    Click on a question below:
+                  </div>
+                  {faqs.map((faq) => (
+                    <Button
+                      key={faq.id}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleFaqClick(faq)}
+                      className="w-full text-left p-3 h-auto glass-morphism hover:bg-primary/10 justify-start text-xs"
+                    >
+                      <div className="flex items-start gap-2">
+                        <Bot className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                        <span className="text-left break-words">{faq.question}</span>
+                      </div>
+                    </Button>
+                  ))}
                 </div>
-                {faqs.map((faq) => (
-                  <Button
-                    key={faq.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleFaqClick(faq)}
-                    className="w-full text-left p-3 h-auto glass-morphism hover:bg-primary/10 justify-start text-xs"
-                  >
-                    <div className="flex items-start gap-2">
-                      <Bot className="h-3 w-3 text-primary mt-0.5 shrink-0" />
-                      <span className="text-left break-words">{faq.question}</span>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            )}
+              );
+            })()}
 
             {/* Typing indicator */}
             {isTyping && (
