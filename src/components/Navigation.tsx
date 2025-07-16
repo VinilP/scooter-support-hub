@@ -27,19 +27,28 @@ const Navigation = () => {
     }, 500);
   };
 
-  const navItems = user ? [
-    { icon: Package, label: "Orders", href: "/order-tracking" },
-    ...(isAdmin ? [
-      { icon: Settings, label: "Admin FAQs", href: "/admin/faqs" },
+  const navItems = user ? (
+    isAdmin ? [
+      // Admin-specific navigation
+      { icon: Settings, label: "Manage FAQs", href: "/admin/faqs" },
       { icon: FileText, label: "All Orders", href: "/admin/orders" },
-      { icon: AlertTriangle, label: "Issues", href: "/admin/escalated-queries" },
-    ] : []),
-    { icon: MessageSquare, label: "Support", href: "/support" },
-    { icon: MessageSquare, label: "Chat", href: "#", onClick: handleChatClick },
-    { icon: Phone, label: "Call", href: "tel:1231231231" },
-    { icon: Mail, label: "Email", href: "mailto:support@scootsupport.com" },
-    { icon: User, label: "Log Out", href: "#", onClick: handleLogout },
-  ] : [
+      { icon: AlertTriangle, label: "Escalated Issues", href: "/admin/escalated-queries" },
+      { icon: MessageSquare, label: "Support", href: "/support" },
+      { icon: MessageSquare, label: "Chat", href: "#", onClick: handleChatClick },
+      { icon: Phone, label: "Call", href: "tel:1231231231" },
+      { icon: Mail, label: "Email", href: "mailto:support@scootsupport.com" },
+      { icon: User, label: "Log Out", href: "#", onClick: handleLogout },
+    ] : [
+      // Regular user navigation
+      { icon: Package, label: "My Orders", href: "/order-tracking" },
+      { icon: MessageSquare, label: "Support", href: "/support" },
+      { icon: MessageSquare, label: "Chat", href: "#", onClick: handleChatClick },
+      { icon: Phone, label: "Call", href: "tel:1231231231" },
+      { icon: Mail, label: "Email", href: "mailto:support@scootsupport.com" },
+      { icon: User, label: "Log Out", href: "#", onClick: handleLogout },
+    ]
+  ) : [
+    // Guest navigation
     { icon: MessageSquare, label: "Support", href: "/support" },
     { icon: MessageSquare, label: "Chat", href: "#", onClick: handleChatClick },
     { icon: Phone, label: "Call", href: "tel:1231231231" },
