@@ -33,10 +33,6 @@ const Navigation = () => {
       { icon: Settings, label: "Manage FAQs", href: "/admin/faqs" },
       { icon: FileText, label: "All Orders", href: "/admin/orders" },
       { icon: AlertTriangle, label: "Escalated Issues", href: "/admin/escalated-queries" },
-      { icon: MessageSquare, label: "Support", href: "/support" },
-      { icon: MessageSquare, label: "Chat", href: "#", onClick: handleChatClick },
-      { icon: Phone, label: "Call", href: "tel:1231231231" },
-      { icon: Mail, label: "Email", href: "mailto:support@scootsupport.com" },
       { icon: User, label: "Log Out", href: "#", onClick: handleLogout },
     ] : [
       // Regular user navigation
