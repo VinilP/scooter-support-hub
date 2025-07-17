@@ -101,11 +101,10 @@ export const OrderSupportChat = ({ order, onBack }: OrderSupportChatProps) => {
 
     try {
       // Submit query to AI support
-      const { data, error } = await supabase.functions.invoke('submit-query', {
+      const { data, error } = await supabase.functions.invoke('save-chat', {
         body: {
-          query: `Customer asking about order ${order.order_id} (${order.model}): ${currentMessage}`,
-          userId: user?.id,
-          context: `Order details: ID ${order.order_id}, Model ${order.model}, Status ${order.status}, Ordered ${formatDate(order.order_date)}${order.delivery_eta ? `, Expected delivery ${formatDate(order.delivery_eta)}` : ''}`
+          message: `Customer asking about order ${order.order_id} (${order.model}): ${currentMessage}`,
+          fileContext: `Order details: ID ${order.order_id}, Model ${order.model}, Status ${order.status}, Ordered ${formatDate(order.order_date)}${order.delivery_eta ? `, Expected delivery ${formatDate(order.delivery_eta)}` : ''}`
         }
       });
 
