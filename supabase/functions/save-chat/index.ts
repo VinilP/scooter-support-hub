@@ -23,6 +23,9 @@ interface SaveChatRequest {
 }
 
 serve(async (req) => {
+  console.log('Save-chat function called, method:', req.method);
+  console.log('OpenAI API key available:', !!openAIApiKey);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
