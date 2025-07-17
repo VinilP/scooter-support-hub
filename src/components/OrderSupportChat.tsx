@@ -100,6 +100,10 @@ export const OrderSupportChat = ({ order, onBack }: OrderSupportChatProps) => {
     setLoading(true);
 
     try {
+      console.log('Starting save-chat function call...');
+      console.log('User:', user?.id);
+      console.log('Message:', currentMessage);
+      
       // Submit query to AI support
       const { data, error } = await supabase.functions.invoke('save-chat', {
         body: {
@@ -107,6 +111,8 @@ export const OrderSupportChat = ({ order, onBack }: OrderSupportChatProps) => {
           fileContext: `Order details: ID ${order.order_id}, Model ${order.model}, Status ${order.status}, Ordered ${formatDate(order.order_date)}${order.delivery_eta ? `, Expected delivery ${formatDate(order.delivery_eta)}` : ''}`
         }
       });
+
+      console.log('Function response received:', { data, error });
 
       if (error) {
         console.error('Error submitting query:', error);
