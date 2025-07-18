@@ -9,8 +9,6 @@ import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-scooter.jpg";
 
 const Support = () => {
-  const [selectedCategory, setSelectedCategory] = useState("general");
-
   const handleChatClick = () => {
     // Scroll to bottom to make chat widget visible and trigger it
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -22,13 +20,6 @@ const Support = () => {
       }
     }, 500);
   };
-
-  const supportCategories = [
-    { id: "general", label: "General Support", icon: MessageSquare },
-    { id: "technical", label: "Technical Issues", icon: Zap },
-    { id: "billing", label: "Billing & Orders", icon: Star },
-    { id: "emergency", label: "Emergency", icon: Phone },
-  ];
 
   const quickActions = [
     { title: "Track Order", description: "Check your order status", icon: Star, href: "/order-tracking" },
@@ -62,30 +53,6 @@ const Support = () => {
                 </p>
               </div>
 
-              {/* Support Categories */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                {supportCategories.map((category) => {
-                  const Icon = category.icon;
-                  return (
-                    <Card 
-                      key={category.id}
-                      className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                        selectedCategory === category.id 
-                          ? 'ring-2 ring-primary shadow-lg shadow-primary/20 bg-primary/5' 
-                          : 'hover:shadow-md'
-                      }`}
-                      onClick={() => setSelectedCategory(category.id)}
-                    >
-                      <CardContent className="p-4 text-center">
-                        <Icon className={`w-6 h-6 mx-auto mb-2 ${
-                          selectedCategory === category.id ? 'text-primary' : 'text-muted-foreground'
-                        }`} />
-                        <p className="text-sm font-medium">{category.label}</p>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
 
               {/* Contact Options */}
               <div className="space-y-4">
