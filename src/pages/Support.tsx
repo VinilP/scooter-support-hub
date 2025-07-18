@@ -32,9 +32,9 @@ const Support = () => {
 
   const quickActions = [
     { title: "Track Order", description: "Check your order status", icon: Star, href: "/order-tracking" },
-    { title: "User Manual", description: "Download user guides", icon: MessageSquare, href: "#" },
-    { title: "Warranty Info", description: "Learn about warranty", icon: Users, href: "#" },
-    { title: "Schedule Service", description: "Book maintenance", icon: Clock, href: "#" },
+    { title: "User Manual", description: "Download user guides", icon: MessageSquare, href: "/user-manual" },
+    { title: "Warranty Info", description: "Learn about warranty", icon: Users, href: "/warranty" },
+    { title: "Schedule Service", description: "Book maintenance", icon: Clock, href: "/schedule-service" },
   ];
 
   return (
