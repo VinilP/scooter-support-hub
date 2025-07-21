@@ -2,13 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Send, Paperclip, User, Bot, FileText, Image, X, MessageCircle, Minimize2, LogIn, LogOut, Flag } from "lucide-react";
+import { Send, Paperclip, User, Bot, FileText, Image, X, MessageCircle, Minimize2, LogIn, LogOut, Flag, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AuthModal from "./AuthModal";
 import EscalationModal from "./EscalationModal";
+import ChatHistory from "./ChatHistory";
 
 interface Message {
   id: string;
@@ -66,6 +67,7 @@ const FloatingChatWidget = () => {
   const [uploading, setUploading] = useState(false);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [showFaqSuggestions, setShowFaqSuggestions] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load FAQs and chat history on mount
@@ -530,6 +532,18 @@ const FloatingChatWidget = () => {
     }
   };
 
+  const handleSelectConversation = (conversationId: string, conversationMessages: Message[]) => {
+    setCurrentConversationId(conversationId);
+    setMessages(conversationMessages);
+    setShowFaqSuggestions(false);
+    setShowHistory(false);
+    
+    toast({
+      title: "Conversation Loaded",
+      description: "Previous conversation has been loaded.",
+    });
+  };
+
   const handleSignOut = async () => {
     // Clear chat history before signing out
     clearChatHistory();
@@ -580,6 +594,17 @@ const FloatingChatWidget = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                {user && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="h-8 w-8 p-0 hover:bg-muted/50"
+                    title="Chat history"
+                  >
+                    <History className="h-3 w-3" />
+                  </Button>
+                )}
                 {user ? (
                   <Button
                     variant="ghost"
@@ -620,155 +645,166 @@ const FloatingChatWidget = () => {
             </div>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex gap-2 max-w-[85%] animate-fade-in",
-                  message.sender === 'user' ? "ml-auto flex-row-reverse" : ""
-                )}
-              >
-                {/* Avatar */}
-                <div className={cn(
-                  "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-1",
-                  message.sender === 'user' 
-                    ? "bg-gradient-primary" 
-                    : "glass-morphism"
-                )}>
-                  {message.sender === 'user' ? (
-                    <User className="h-3 w-3 text-white" />
-                  ) : (
-                    <Bot className="h-3 w-3 text-primary" />
-                  )}
-                </div>
+          {/* Content Area - Chat or History */}
+          {showHistory ? (
+            <ChatHistory 
+              onBack={() => setShowHistory(false)}
+              onSelectConversation={handleSelectConversation}
+            />
+          ) : (
+            <>
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "flex gap-2 max-w-[85%] animate-fade-in",
+                      message.sender === 'user' ? "ml-auto flex-row-reverse" : ""
+                    )}
+                  >
+                    {/* Avatar */}
+                    <div className={cn(
+                      "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-1",
+                      message.sender === 'user' 
+                        ? "bg-gradient-primary" 
+                        : "glass-morphism"
+                    )}>
+                      {message.sender === 'user' ? (
+                        <User className="h-3 w-3 text-white" />
+                      ) : (
+                        <Bot className="h-3 w-3 text-primary" />
+                      )}
+                    </div>
 
-                {/* Message bubble */}
-                <div className={cn(
-                  "p-3 rounded-2xl max-w-full text-sm",
-                  message.sender === 'user'
-                    ? "bg-gradient-primary text-white rounded-br-lg"
-                    : "glass-morphism rounded-bl-lg"
-                )}>
-                  {/* File attachment */}
-                  {message.file && (
-                    <div className="mb-2 p-2 rounded-lg bg-background/20 border border-border/20">
-                      <div className="flex items-center gap-2">
-                        {message.file.type === 'pdf' ? (
-                          <FileText className="h-3 w-3 text-red-500" />
-                        ) : (
-                          <Image className="h-3 w-3 text-blue-500" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate">{message.file.name}</p>
-                          <p className="text-xs opacity-70">{message.file.size}</p>
+                    {/* Message bubble */}
+                    <div className={cn(
+                      "p-3 rounded-2xl max-w-full text-sm",
+                      message.sender === 'user'
+                        ? "bg-gradient-primary text-white rounded-br-lg"
+                        : "glass-morphism rounded-bl-lg"
+                    )}>
+                      {/* File attachment */}
+                      {message.file && (
+                        <div className="mb-2 p-2 rounded-lg bg-background/20 border border-border/20">
+                          <div className="flex items-center gap-2">
+                            {message.file.type === 'pdf' ? (
+                              <FileText className="h-3 w-3 text-red-500" />
+                            ) : (
+                              <Image className="h-3 w-3 text-blue-500" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate">{message.file.name}</p>
+                              <p className="text-xs opacity-70">{message.file.size}</p>
+                            </div>
+                          </div>
                         </div>
+                      )}
+                      
+                      {/* Message text */}
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                      
+                      {/* Show FAQ Options button for follow-up messages */}
+                      {message.sender === 'bot' && message.content.includes("Is there anything else I can help you with?") && (
+                        <div className="mt-3 pt-2 border-t border-border/20">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={showFaqOptions}
+                            className="h-7 px-3 text-xs glass-morphism hover:bg-primary/10"
+                          >
+                            <Bot className="w-3 h-3 mr-1" />
+                            Show FAQ Options
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {/* Not helpful button for bot messages */}
+                      {message.sender === 'bot' && user && message.id !== '1' && !message.content.includes("Is there anything else I can help you with?") && (
+                        <div className="mt-3 pt-2 border-t border-border/20">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              // Find the previous user message to get the question
+                              const messageIndex = messages.findIndex(m => m.id === message.id);
+                              const prevUserMessage = messages.slice(0, messageIndex).reverse().find(m => m.sender === 'user');
+                              const question = prevUserMessage?.content || 'Previous question not found';
+                              const fileUrl = prevUserMessage?.file ? 'file-attached' : undefined;
+                              
+                              handleEscalateQuery(message.id, question, message.content, fileUrl);
+                            }}
+                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          >
+                            <Flag className="w-3 h-3 mr-1" />
+                            Not helpful? Submit query
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {/* Timestamp */}
+                      <p className={cn(
+                        "text-xs mt-1 opacity-70",
+                        message.sender === 'user' ? "text-right" : ""
+                      )}>
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* FAQ Suggestions */}
+                {(() => {
+                  console.log('FAQ Debug:', { 
+                    showFaqSuggestions, 
+                    faqsLength: faqs.length, 
+                    faqs: faqs.slice(0, 2) // Just first 2 for debugging
+                  });
+                  return showFaqSuggestions && faqs.length > 0 && (
+                    <div className="space-y-2 animate-fade-in">
+                      <div className="text-xs text-muted-foreground text-center mb-2">
+                        Click on a question below:
+                      </div>
+                      {faqs.map((faq) => (
+                        <Button
+                          key={faq.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleFaqClick(faq)}
+                          className="w-full text-left p-3 h-auto glass-morphism hover:bg-primary/10 justify-start text-xs"
+                        >
+                          <div className="flex items-start gap-2">
+                            <Bot className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                            <span className="text-left break-words">{faq.question}</span>
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* Typing indicator */}
+                {isTyping && (
+                  <div className="flex gap-2 max-w-[85%] animate-fade-in">
+                    <div className="w-6 h-6 rounded-full glass-morphism flex items-center justify-center mt-1">
+                      <Bot className="h-3 w-3 text-primary" />
+                    </div>
+                    <div className="p-3 glass-morphism rounded-2xl rounded-bl-lg">
+                      <div className="flex gap-1">
+                        <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"></div>
+                        <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                       </div>
                     </div>
-                  )}
-                  
-                  {/* Message text */}
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                  
-                  {/* Show FAQ Options button for follow-up messages */}
-                  {message.sender === 'bot' && message.content.includes("Is there anything else I can help you with?") && (
-                    <div className="mt-3 pt-2 border-t border-border/20">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={showFaqOptions}
-                        className="h-7 px-3 text-xs glass-morphism hover:bg-primary/10"
-                      >
-                        <Bot className="w-3 h-3 mr-1" />
-                        Show FAQ Options
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {/* Not helpful button for bot messages */}
-                  {message.sender === 'bot' && user && message.id !== '1' && !message.content.includes("Is there anything else I can help you with?") && (
-                    <div className="mt-3 pt-2 border-t border-border/20">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          // Find the previous user message to get the question
-                          const messageIndex = messages.findIndex(m => m.id === message.id);
-                          const prevUserMessage = messages.slice(0, messageIndex).reverse().find(m => m.sender === 'user');
-                          const question = prevUserMessage?.content || 'Previous question not found';
-                          const fileUrl = prevUserMessage?.file ? 'file-attached' : undefined;
-                          
-                          handleEscalateQuery(message.id, question, message.content, fileUrl);
-                        }}
-                        className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <Flag className="w-3 h-3 mr-1" />
-                        Not helpful? Submit query
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {/* Timestamp */}
-                  <p className={cn(
-                    "text-xs mt-1 opacity-70",
-                    message.sender === 'user' ? "text-right" : ""
-                  )}>
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-              </div>
-            ))}
-
-            {/* FAQ Suggestions */}
-            {(() => {
-              console.log('FAQ Debug:', { 
-                showFaqSuggestions, 
-                faqsLength: faqs.length, 
-                faqs: faqs.slice(0, 2) // Just first 2 for debugging
-              });
-              return showFaqSuggestions && faqs.length > 0 && (
-                <div className="space-y-2 animate-fade-in">
-                  <div className="text-xs text-muted-foreground text-center mb-2">
-                    Click on a question below:
                   </div>
-                  {faqs.map((faq) => (
-                    <Button
-                      key={faq.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleFaqClick(faq)}
-                      className="w-full text-left p-3 h-auto glass-morphism hover:bg-primary/10 justify-start text-xs"
-                    >
-                      <div className="flex items-start gap-2">
-                        <Bot className="h-3 w-3 text-primary mt-0.5 shrink-0" />
-                        <span className="text-left break-words">{faq.question}</span>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              );
-            })()}
-
-            {/* Typing indicator */}
-            {isTyping && (
-              <div className="flex gap-2 max-w-[85%] animate-fade-in">
-                <div className="w-6 h-6 rounded-full glass-morphism flex items-center justify-center mt-1">
-                  <Bot className="h-3 w-3 text-primary" />
-                </div>
-                <div className="p-3 glass-morphism rounded-2xl rounded-bl-lg">
-                  <div className="flex gap-1">
-                    <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"></div>
-                    <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
 
-          {/* Input area */}
-          <div className="p-3 border-t glass-morphism">
+          {/* Input area - Only show when not in history view */}
+          {!showHistory && (
+            <div className="p-3 border-t glass-morphism">
             {/* File preview */}
             {selectedFile && (
               <div className="mb-2 p-2 rounded-lg border glass-morphism">
@@ -836,7 +872,8 @@ const FloatingChatWidget = () => {
             <p className="text-xs text-muted-foreground mt-2 text-center">
               {user ? "Upload PDF or images for better assistance" : "Sign in to use chat features"}
             </p>
-          </div>
+            </div>
+          )}
         </Card>
       )}
       
