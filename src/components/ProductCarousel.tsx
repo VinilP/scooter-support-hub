@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Zap, Battery, Award } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ const featuredProducts: CarouselProduct[] = [
 ];
 
 const ProductCarousel = () => {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
@@ -130,7 +132,10 @@ const ProductCarousel = () => {
                             ${product.price.toLocaleString()}
                           </span>
                         </div>
-                        <Button className="px-8 py-3 bg-gradient-to-r from-primary to-primary-glow text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity duration-200 hover:shadow-lg hover:shadow-primary/25">
+                        <Button 
+                          className="px-8 py-3 bg-gradient-to-r from-primary to-primary-glow text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity duration-200 hover:shadow-lg hover:shadow-primary/25"
+                          onClick={() => navigate(`/scooter/${product.id}`)}
+                        >
                           View Details
                         </Button>
                       </div>

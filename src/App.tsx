@@ -15,6 +15,7 @@ import Support from "./pages/Support";
 import UserManual from "./pages/UserManual";
 import Warranty from "./pages/Warranty";
 import ScheduleService from "./pages/ScheduleService";
+import ScooterDetail from "./pages/ScooterDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,9 +34,10 @@ const App = () => (
             <Route path="/admin/orders" element={<AdminOrders />} />
             <Route path="/admin/escalated-queries" element={<AdminEscalatedQueries />} />
             <Route path="/support" element={<Support />} />
-            <Route path="/user-manual" element={<UserManual />} />
-            <Route path="/warranty" element={<Warranty />} />
-            <Route path="/schedule-service" element={<ScheduleService />} />
+          <Route path="/user-manual" element={<UserManual />} />
+          <Route path="/warranty" element={<Warranty />} />
+          <Route path="/schedule-service" element={<ScheduleService />} />
+          <Route path="/scooter/:id" element={<ScooterDetail />} />
             <Route path="/order-tracking" element={<OrderTracking />} />
             <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
