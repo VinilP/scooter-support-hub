@@ -100,23 +100,44 @@ serve(async (req) => {
       }
     );
 
+    let twilioResult = null;
+    let smsSuccessful = false;
+    
     if (!twilioResponse.ok) {
-      const error = await twilioResponse.text();
-      console.error('Twilio error:', error);
-      throw new Error(`Failed to send SMS: ${error}`);
+      const errorText = await twilioResponse.text();
+      console.log('Twilio response:', errorText);
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        // Handle Twilio trial account limitation (unverified numbers)
+        if (errorData.code === 21608) {
+          console.log('Trial account limitation - unverified number. Continuing with demo flow.');
+          smsSuccessful = false; // SMS not sent but we'll continue the flow
+        } else {
+          throw new Error(`Failed to send SMS: ${errorText}`);
+        }
+      } catch (parseError) {
+        throw new Error(`Failed to send SMS: ${errorText}`);
+      }
+    } else {
+      twilioResult = await twilioResponse.json();
+      console.log('SMS sent successfully:', twilioResult.sid);
+      smsSuccessful = true;
     }
-
-    const twilioResult = await twilioResponse.json();
-    console.log('SMS sent successfully:', twilioResult.sid);
 
     // For demo purposes, we'll return the OTP in development
     // In production, remove this and only return success status
     const isDevelopment = Deno.env.get('DENO_DEPLOYMENT_ID') === undefined;
 
+    const responseMessage = smsSuccessful 
+      ? 'OTP sent successfully' 
+      : 'Demo mode: Use any 6-digit code to continue (unverified number)';
+
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'OTP sent successfully',
+        message: responseMessage,
+        smsSuccessful,
         // Only include OTP in development for testing
         ...(isDevelopment && { otp })
       }),

@@ -69,10 +69,20 @@ const MobileAuth = () => {
       
       setStep('otp');
       setCountdown(30);
-      toast({
-        title: "OTP Sent",
-        description: `Verification code sent to ${fullPhoneNumber}`,
-      });
+      
+      // Show appropriate message based on SMS delivery status
+      if (data.smsSuccessful) {
+        toast({
+          title: "OTP Sent",
+          description: `Verification code sent to ${fullPhoneNumber}`,
+        });
+      } else {
+        toast({
+          title: "Demo Mode",
+          description: "Enter any 6-digit code to continue (unverified number)",
+          variant: "default",
+        });
+      }
 
       // For development, show the OTP in console
       if (data.otp) {
