@@ -207,10 +207,10 @@ const ChatHistory = ({ onBack, onSelectConversation }: ChatHistoryProps) => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex min-h-0">
         {/* Conversations List */}
-        <div className="w-1/2 border-r">
-          <ScrollArea className="h-full">
+        <div className="w-1/2 border-r flex flex-col min-h-0">
+          <ScrollArea className="flex-1">
             {loading ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 Loading conversations...
