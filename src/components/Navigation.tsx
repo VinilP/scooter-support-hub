@@ -2,7 +2,7 @@ import { Menu, X, Zap, User, Package, Settings, MessageSquare, Phone, Mail, Aler
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
@@ -10,9 +10,11 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await signOut();
+    navigate("/");
   };
 
   const handleChatClick = () => {
