@@ -28,6 +28,43 @@ const OrderStatus = () => {
     }
   }, [user]);
 
+  const updateExpiredOrders = async (ordersList: Order[]) => {
+    const now = new Date();
+    const ordersToUpdate = ordersList.filter(order => {
+      if (!order.delivery_eta || order.status === 'delivered') return false;
+      const deliveryDate = new Date(order.delivery_eta);
+      return deliveryDate < now;
+    });
+
+    if (ordersToUpdate.length === 0) return ordersList;
+
+    console.log(`Updating ${ordersToUpdate.length} expired orders to delivered status`);
+
+    // Update orders in database
+    for (const order of ordersToUpdate) {
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .update({ status: 'delivered' })
+          .eq('id', order.id);
+
+        if (error) {
+          console.error('Error updating order status:', error);
+        } else {
+          console.log(`Updated order ${order.order_id} to delivered status`);
+        }
+      } catch (error) {
+        console.error('Error updating order:', error);
+      }
+    }
+
+    // Return updated orders list
+    return ordersList.map(order => {
+      const shouldUpdate = ordersToUpdate.some(o => o.id === order.id);
+      return shouldUpdate ? { ...order, status: 'delivered' } : order;
+    });
+  };
+
   const fetchOrders = async () => {
     if (!user) return;
     
@@ -41,7 +78,12 @@ const OrderStatus = () => {
         return;
       }
 
-      setOrders(data.orders || []);
+      let fetchedOrders = data.orders || [];
+      
+      // Check and update expired orders
+      const updatedOrders = await updateExpiredOrders(fetchedOrders);
+      
+      setOrders(updatedOrders);
     } catch (error) {
       console.error('Error:', error);
     } finally {

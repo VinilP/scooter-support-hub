@@ -51,6 +51,43 @@ const AdminOrders = () => {
     setFilteredOrders(filtered);
   }, [orders, searchTerm]);
 
+  const updateExpiredOrders = async (ordersList: Order[]) => {
+    const now = new Date();
+    const ordersToUpdate = ordersList.filter(order => {
+      if (!order.delivery_eta || order.status === 'delivered') return false;
+      const deliveryDate = new Date(order.delivery_eta);
+      return deliveryDate < now;
+    });
+
+    if (ordersToUpdate.length === 0) return ordersList;
+
+    console.log(`Admin: Updating ${ordersToUpdate.length} expired orders to delivered status`);
+
+    // Update orders in database
+    for (const order of ordersToUpdate) {
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .update({ status: 'delivered' })
+          .eq('id', order.id);
+
+        if (error) {
+          console.error('Error updating order status:', error);
+        } else {
+          console.log(`Updated order ${order.order_id} to delivered status`);
+        }
+      } catch (error) {
+        console.error('Error updating order:', error);
+      }
+    }
+
+    // Return updated orders list
+    return ordersList.map(order => {
+      const shouldUpdate = ordersToUpdate.some(o => o.id === order.id);
+      return shouldUpdate ? { ...order, status: 'delivered' } : order;
+    });
+  };
+
   const fetchAllOrders = async () => {
     try {
       setLoading(true);
@@ -60,8 +97,14 @@ const AdminOrders = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
-      setFilteredOrders(data || []);
+      
+      let fetchedOrders = data || [];
+      
+      // Check and update expired orders
+      const updatedOrders = await updateExpiredOrders(fetchedOrders);
+      
+      setOrders(updatedOrders);
+      setFilteredOrders(updatedOrders);
     } catch (error: any) {
       toast({
         title: "Error",
